@@ -14,17 +14,21 @@ fun LoginRoute(
     onDarkThemeChanged: (Boolean) -> Unit,
     onNavigateToOTPLogin: () -> Unit,
     onNavigateToRegister: () -> Unit,
-    onLoginSuccess: () -> Unit,
+    onLoginSuccess: (TestLoginRole) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     val currentOnLoginSuccess by rememberUpdatedState (newValue = onLoginSuccess)
 
-    LaunchedEffect(uiState.isLoginSuccessful) {
-        if (uiState.isLoginSuccessful) {
+    LaunchedEffect(
+        uiState.isLoginSuccessful,
+        uiState.loggedInRole) {
+        val role = uiState.loggedInRole
+
+        if (uiState.isLoginSuccessful && role != null) {
             viewModel.onLoginSuccessHandled()
-            currentOnLoginSuccess()
+            currentOnLoginSuccess(role)
         }
     }
 

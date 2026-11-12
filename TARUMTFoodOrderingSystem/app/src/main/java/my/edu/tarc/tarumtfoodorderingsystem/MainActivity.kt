@@ -11,18 +11,31 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import my.edu.tarc.tarumtfoodorderingsystem.navigation.AppNavHost
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.LoginAuthenticator
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.TestLoginRole
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.register.RegistrationService
 import my.edu.tarc.tarumtfoodorderingsystem.ui.theme.TARUMTFoodOrderingSystemTheme
 
 class MainActivity : ComponentActivity() {
 
-    // This is a placeholder because supabase not implemented yet
+    // This is a placeholder because supabase not implemented yet (Need replace later)
     private val authRepository: LoginAuthenticator by lazy {
-        LoginAuthenticator { _, _ ->
+        LoginAuthenticator { userId, _ ->
+            when (userId) {
+                2222222 -> TestLoginRole.WORKER
+                3333333 -> TestLoginRole.ADMIN
+                else -> TestLoginRole.CUSTOMER
+            }
+        }
+    }
+
+    private val registrationService: RegistrationService by lazy {
+        RegistrationService { _, _, _ ->
             throw IllegalStateException(
-                "Supabase login has not been implemented yet."
+                "Supabase registration has not been implemented yet."
             )
         }
     }
+    //////////////////////////////////////////////////////////////////
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,6 +52,7 @@ class MainActivity : ComponentActivity() {
             ) {
                 AppNavHost(
                     authRepository = authRepository,
+                    registrationService = registrationService,
                     isDarkTheme = isDarkTheme,
                     onDarkThemeChanged = { enabled ->
                         isDarkTheme = enabled

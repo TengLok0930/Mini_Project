@@ -8,6 +8,13 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
 
+// Temporary frontend role login
+enum class TestLoginRole {
+    CUSTOMER,
+    WORKER,
+    ADMIN
+}
+
 data class LoginUiState(
     val userId: String = "",
     val password: String = "",
@@ -16,7 +23,8 @@ data class LoginUiState(
     val userIdError: String? = null,
     val passwordError: String? = null,
     val loginError: String? = null,
-    val isLoginSuccessful: Boolean = false
+    val isLoginSuccessful: Boolean = false,
+    val loggedInRole: TestLoginRole? = null // For login
 )
 
 // Login Authenticator is to be deleted soon (delete for backend)
@@ -24,7 +32,7 @@ fun interface LoginAuthenticator {
     suspend fun login(
         userId: Int,
         password: String
-    )
+    ): TestLoginRole
 }
 
 class LoginViewModel(private val authenticator: LoginAuthenticator) : ViewModel() {
@@ -78,22 +86,20 @@ class LoginViewModel(private val authenticator: LoginAuthenticator) : ViewModel(
         val currentState = _uiState.value
         val userIdText = currentState.userId.trim()
 
-        val containsOnlyDigits = userIdText.isNotEmpty() && userIdText.all { it in '0' .. '9'}
-
-        val parsedUserId = if (containsOnlyDigits) {
-            userIdText.toIntOrNull()
-        } else {
-            null
-        }
-
         val userIdError = when {
-            userIdText.isBlank() -> "Please enter your TARUMT ID"
-            parsedUserId == null -> "Please enter a valid numeric ID"
+            userIdText.isBlank() ->
+                "Please enter your TARUMT ID."
+
+            !USER_ID_REGEX.matches(userIdText) ->
+                "User ID must contain exactly 7 digits."
+
             else -> null
         }
 
         val passwordError = when {
-            currentState.password.isBlank() -> "Please enter your password."
+            currentState.password.isBlank() ->
+                "Please enter your password."
+
             else -> null
         }
 
@@ -102,26 +108,28 @@ class LoginViewModel(private val authenticator: LoginAuthenticator) : ViewModel(
                 it.copy(
                     userIdError = userIdError,
                     passwordError = passwordError,
-                    loginError = null
+                    loginError = null,
+                    loggedInRole = null
                 )
             }
             return
         }
 
-        val validUserId = parsedUserId ?: return
+        val validUserId = userIdText.toIntOrNull() ?: return
 
         _uiState.update {
             it.copy(
                 isLoading = true,
                 userIdError = null,
                 passwordError = null,
-                loginError = null
+                loginError = null,
+                loggedInRole = null
             )
         }
 
         viewModelScope.launch {
             try {
-                authenticator.login(
+                val role = authenticator.login(
                     userId = validUserId,
                     password = currentState.password
                 )
@@ -131,6 +139,7 @@ class LoginViewModel(private val authenticator: LoginAuthenticator) : ViewModel(
                         isLoading = false,
                         password = "",
                         isPasswordVisible = false,
+                        loggedInRole = role,
                         isLoginSuccessful = true
                     )
                 }
@@ -140,6 +149,7 @@ class LoginViewModel(private val authenticator: LoginAuthenticator) : ViewModel(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
+                        loggedInRole = null,
                         loginError = "Unable to sign in. Check your " +
                                 "credentials and connection, then try again."
                     )
@@ -150,7 +160,14 @@ class LoginViewModel(private val authenticator: LoginAuthenticator) : ViewModel(
 
     fun onLoginSuccessHandled() {
         _uiState.update {
-            it.copy(isLoginSuccessful = false)
+            it.copy(
+                isLoginSuccessful = false,
+                loggedInRole = null
+            )
         }
+    }
+
+    private companion object {
+        val USER_ID_REGEX = Regex("""[0-9]{7}""")
     }
 }

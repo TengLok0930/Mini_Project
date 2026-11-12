@@ -171,7 +171,7 @@ fun LoginScreen(
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         placeholder = {
-                            Text("Enter your user ID")
+                            Text("Enter your TARUMT ID")
                         },
                         isError = uiState.userIdError != null,
                         supportingText = uiState.userIdError?.let { error ->
