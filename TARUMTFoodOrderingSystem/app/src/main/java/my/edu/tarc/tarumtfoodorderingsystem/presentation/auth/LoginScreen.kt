@@ -342,7 +342,6 @@ private fun LoginMethodSelector(
             modifier = Modifier.padding(4.dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            // Already selected; this is not another destination.
             Surface(
                 color = colors.primary,
                 contentColor = colors.onPrimary,

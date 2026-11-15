@@ -1,5 +1,7 @@
 package my.edu.tarc.tarumtfoodorderingsystem.navigation
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -27,6 +29,8 @@ import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.LoginAuthenticator
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.LoginRoute
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.LoginViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.TestLoginRole
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.emailLogin.EmailLoginRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.emailLogin.EmailLoginViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.register.RegisterRoute
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.register.RegisterViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.register.RegistrationService
@@ -35,6 +39,7 @@ object AppRoutes {
 
     // Auth
     const val LOGIN = "login"
+    const val EMAIL_LOGIN = "email_login"
     const val OTP_LOGIN = "otp_login"
     const val REGISTER = "register"
 
@@ -102,7 +107,23 @@ fun AppNavHost(
         /////////////////////////////////////////////////////////
         //////////////////// AUTH SCREENS ///////////////////////
         /////////////////////////////////////////////////////////
-        composable(AppRoutes.LOGIN) {
+        composable(
+            route = AppRoutes.LOGIN,
+            exitTransition = {
+                if (targetState.destination.route == AppRoutes.EMAIL_LOGIN) {
+                    ExitTransition.None
+                } else {
+                    null
+                }
+            },
+            popEnterTransition = {
+                if (initialState.destination.route == AppRoutes.EMAIL_LOGIN) {
+                    EnterTransition.None
+                } else {
+                    null
+                }
+            }
+        ) {
             val loginViewModel: LoginViewModel = viewModel {
                 LoginViewModel(
                     authenticator = authRepository
@@ -114,7 +135,7 @@ fun AppNavHost(
                 isDarkTheme = isDarkTheme,
                 onDarkThemeChanged = onDarkThemeChanged,
                 onNavigateToOTPLogin = {
-                    navController.navigate(AppRoutes.OTP_LOGIN) {
+                    navController.navigate(AppRoutes.EMAIL_LOGIN) {
                         launchSingleTop = true
                     }
                 },
@@ -130,6 +151,36 @@ fun AppNavHost(
                         TestLoginRole.ADMIN -> AppRoutes.ADMIN
                     }
                     navController.navigate(destination) {
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
+        composable(
+            route = AppRoutes.EMAIL_LOGIN,
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
+            popExitTransition = { ExitTransition.None }
+        ) {
+            val emailLoginViewModel: EmailLoginViewModel = viewModel()
+
+            EmailLoginRoute(
+                viewModel = emailLoginViewModel,
+                isDarkTheme = isDarkTheme,
+                onDarkThemeChanged = onDarkThemeChanged,
+                onBackToPasswordLogin = {
+                    navController.popBackStack()
+                },
+                onContinueToOTP = { email ->
+                    // Temporarily hand the validated email to the OTP destination.
+                    // This does not send a real code.
+                    navController.currentBackStackEntry
+                        ?.savedStateHandle
+                        ?.set("otp_email", email)
+
+                    navController.navigate(AppRoutes.OTP_LOGIN) {
                         launchSingleTop = true
                     }
                 }
