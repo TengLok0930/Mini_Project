@@ -28,6 +28,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.adminPanel.AdminPanelRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.adminPanel.AdminPanelViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.LoginAuthenticator
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.LoginRoute
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.LoginViewModel
@@ -56,6 +58,10 @@ object AppRoutes {
 
     // Admin
     const val ADMIN = "admin"
+    const val CANTEEN_MAINTENANCE = "canteen_maintenance"
+    const val STORE_MAINTENANCE = "store_maintenance"
+    const val MENU_MAINTENANCE = "menu_maintenance"
+    const val ORDER_REPORTING = "order_reporting"
 }
 
 // When implementing backend remember to delete authRepository, registrationService (they are placeholders for front end)
@@ -310,15 +316,87 @@ fun AppNavHost(
         /////////////////////////////////////////////////////////
 
         composable(AppRoutes.ADMIN) {
+            val adminPanelViewModel: AdminPanelViewModel = viewModel()
+
+            AdminPanelRoute(
+                viewModel = adminPanelViewModel,
+
+                onNavigateToCanteenMaintenance = {
+                    navController.navigate(AppRoutes.CANTEEN_MAINTENANCE) {
+                        launchSingleTop = true
+                    }
+                },
+
+                onNavigateToStoreMaintenance = {
+                    navController.navigate(AppRoutes.STORE_MAINTENANCE) {
+                        launchSingleTop = true
+                    }
+                },
+
+                onNavigateToMenuMaintenance = {
+                    navController.navigate(AppRoutes.MENU_MAINTENANCE) {
+                        launchSingleTop = true
+                    }
+                },
+
+                onNavigateToOrderReporting = {
+                    navController.navigate(AppRoutes.ORDER_REPORTING) {
+                        launchSingleTop = true
+                    }
+                },
+
+                onLogout = {
+                    // Frontend navigation only
+                    navController.navigate(AppRoutes.LOGIN) {
+                        popUpTo(navController.graph.id) {
+                            inclusive = true
+                        }
+
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
+        composable(AppRoutes.CANTEEN_MAINTENANCE) {
             PlaceholderScreen(
-                title = "Admin",
-                message = "Admin screen will be added here.",
+                title = "Canteen Maintenance",
+                message = "Canteen maintenance screen will be added here.",
                 onBack = {
                     navController.popBackStack()
                 }
             )
         }
 
+        composable(AppRoutes.STORE_MAINTENANCE) {
+            PlaceholderScreen(
+                title = "Store Maintenance",
+                message = "Store maintenance screen will be added here.",
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(AppRoutes.MENU_MAINTENANCE) {
+            PlaceholderScreen(
+                title = "Menu Maintenance",
+                message = "Menu maintenance screen will be added here.",
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(AppRoutes.ORDER_REPORTING) {
+            PlaceholderScreen(
+                title = "Order Reporting",
+                message = "Order reporting screen will be added here.",
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
     }
 }
 
@@ -355,7 +433,7 @@ private fun PlaceholderScreen(
             )
 
             Button(onClick = onBack) {
-                Text("Back to login")
+                Text("Back")
             }
         }
     }
