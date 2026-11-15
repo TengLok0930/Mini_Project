@@ -1,5 +1,6 @@
 package my.edu.tarc.tarumtfoodorderingsystem.navigation
 
+import android.content.pm.ApplicationInfo
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
@@ -18,8 +19,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
@@ -31,6 +34,8 @@ import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.LoginViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.TestLoginRole
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.emailLogin.EmailLoginRoute
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.emailLogin.EmailLoginViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.otp.OTPLoginRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.otp.OTPLoginViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.register.RegisterRoute
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.register.RegisterViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.register.RegistrationService
@@ -53,7 +58,7 @@ object AppRoutes {
     const val ADMIN = "admin"
 }
 
-// When implementing backend remember to delete authoRepository, registrationService (they are placeholders for front end)
+// When implementing backend remember to delete authRepository, registrationService (they are placeholders for front end)
 
 @Composable
 fun AppNavHost(
@@ -174,8 +179,7 @@ fun AppNavHost(
                     navController.popBackStack()
                 },
                 onContinueToOTP = { email ->
-                    // Temporarily hand the validated email to the OTP destination.
-                    // This does not send a real code.
+                    // Temporarily hand the validated email to the OTP destination. (Need change later on backend)
                     navController.currentBackStackEntry
                         ?.savedStateHandle
                         ?.set("otp_email", email)
@@ -187,14 +191,69 @@ fun AppNavHost(
             )
         }
 
-        composable(AppRoutes.OTP_LOGIN) {
-            PlaceholderScreen(
-                title = "Email code login",
-                message = "OTPLoginScreen will be added here.",
-                onBack = {
-                    navController.popBackStack()
+        composable(AppRoutes.OTP_LOGIN) { backStackEntry ->
+            val context = LocalContext.current
+
+            val isDebuggable = (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
+
+            val email = remember(backStackEntry) {
+                navController.previousBackStackEntry
+                    ?.savedStateHandle
+                    ?.get<String>("otp_email")
+                    .orEmpty()
+            }
+
+            if (email.isBlank()) {
+                PlaceholderScreen(
+                    title = "Email missing",
+                    message = "Go back and enter your registered email again.",
+                    onBack = {
+                        navController.popBackStack()
+                    }
+                )
+            } else {
+                val otpViewModel: OTPLoginViewModel = viewModel {
+                    OTPLoginViewModel(
+                        email = email,
+                        enableDebugTesting = isDebuggable
+                    )
                 }
-            )
+
+                OTPLoginRoute(
+                    viewModel = otpViewModel,
+
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+
+                    onChangeEmail = {
+                        navController.popBackStack()
+                    },
+
+                    onVerificationSuccess = {
+                        // Frontend test destination only.
+                        // Real OTP authentication will later return the account role.
+                        val destination = if (
+                            email.trim().equals(
+                                other = "worker@tarc.edu.my",
+                                ignoreCase = true
+                            )
+                        ) {
+                            AppRoutes.WORKER
+                        } else {
+                            AppRoutes.CUSTOMER
+                        }
+
+                        navController.navigate(destination) {
+                            popUpTo(AppRoutes.LOGIN) {
+                                inclusive = true
+                            }
+
+                            launchSingleTop = true
+                        }
+                    }
+                )
+            }
         }
 
         composable(AppRoutes.REGISTER) {
