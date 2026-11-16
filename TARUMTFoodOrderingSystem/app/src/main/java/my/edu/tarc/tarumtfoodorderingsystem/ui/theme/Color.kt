@@ -57,3 +57,16 @@ val DarkCampusOnSurfaceVariant = Color(0xFFBCC0CC)
 val DarkCampusOutline = Color(0xFF858A9A)
 val DarkCampusError = Color(0xFFFFB4AB)
 val DarkCampusOnError = Color(0xFF690005)
+
+// MISC COLOURS
+val PriceGreenLight = Color(0xFF3F6212)
+val PriceGreenDark = Color(0xFFB5D99C)
+
+val ReportPreviousMonthLight = Color(0xFF4338CA)
+val ReportPreviousMonthDark = Color(0xFFA5B4FC)
+
+val ReportThisMonthLight = Color(0xFFA21CAF)
+val ReportThisMonthDark = Color(0xFFF0ABFC)
+
+val ReportOverallLight = Color(0xFF3F6212)
+val ReportOverallDark = Color(0xFFB7F075)

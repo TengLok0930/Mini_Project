@@ -150,22 +150,22 @@ fun AdminAddCanteenScreen(
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         verticalAlignment = Alignment.Top
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxWidth()
+                        Column(
+                            modifier = Modifier.weight(1f)
                         ) {
                             AppFieldLabel(
                                 title = "Attach image",
                                 required = true
                             )
-                        }
 
-                        Text(
-                            text = "Crop to square\nSaved up to\n100px × 100px",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = colors.onSurfaceVariant
-                        )
+                            Spacer(Modifier.height(6.dp))
+
+                            Text(
+                                text = "Crop to square\nSaved up to\n100px × 100px",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colors.onSurfaceVariant
+                            )
+                        }
 
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally

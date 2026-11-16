@@ -30,9 +30,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.io.IOException
@@ -43,6 +45,16 @@ import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.canteenMaintenanc
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.canteenMaintenance.AdminCanteenViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.canteenMaintenance.addCanteen.AdminAddCanteenRoute
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.canteenMaintenance.addCanteen.AdminAddCanteenViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.menuMaintenance.AdminMenuRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.menuMaintenance.AdminMenuViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.menuMaintenance.addMenuItem.AdminAddItemRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.menuMaintenance.addMenuItem.AdminAddItemViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.orderReporting.AdminReportRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.orderReporting.AdminReportViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.storeMaintenance.AdminStoreRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.storeMaintenance.AdminStoreViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.storeMaintenance.addStore.AdminAddStoreRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.storeMaintenance.addStore.AdminAddStoreViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.LoginAuthenticator
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.LoginRoute
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.LoginViewModel
@@ -75,7 +87,17 @@ object AppRoutes {
     const val CANTEEN_MAINTENANCE = "canteen_maintenance"
     const val CREATE_CANTEEN = "create_canteen"
     const val STORE_MAINTENANCE = "store_maintenance"
+    const val CREATE_STORE = "create_store/{canteenId}"
+
+    fun createStore(canteenId: Int): String {
+        return "create_store/$canteenId"
+    }
     const val MENU_MAINTENANCE = "menu_maintenance"
+    const val CREATE_MENU_ITEM = "create_menu_item/{storeId}"
+
+    fun createMenuItem(storeId: Int): String {
+        return "create_menu_item/$storeId"
+    }
     const val ORDER_REPORTING = "order_reporting"
 }
 
@@ -485,10 +507,57 @@ fun AppNavHost(
 
         // Store Maintenance side
         composable(AppRoutes.STORE_MAINTENANCE) {
-            PlaceholderScreen(
-                title = "Store Maintenance",
-                message = "Store maintenance screen will be added here.",
-                onBack = {
+            val adminStoreViewModel: AdminStoreViewModel = viewModel()
+
+            AdminStoreRoute(
+                viewModel = adminStoreViewModel,
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToCreateStore = { canteenId ->
+                    navController.navigate(
+                        AppRoutes.createStore(canteenId)
+                    ) {
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
+        composable(
+            route = AppRoutes.CREATE_STORE,
+            arguments = listOf(
+                navArgument("canteenId") {
+                    type = NavType.IntType
+                }
+            )
+        ) { backStackEntry ->
+            val context = LocalContext.current
+
+            val canteenId = requireNotNull(
+                backStackEntry.arguments
+            ).getInt("canteenId")
+
+            val adminAddStoreViewModel: AdminAddStoreViewModel = viewModel {
+                AdminAddStoreViewModel(
+                    initialCanteenId = canteenId
+                )
+            }
+
+            AdminAddStoreRoute(
+                viewModel = adminAddStoreViewModel,
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onCreateStore = { draft ->
+                    // Frontend validation only.
+                    // No store is saved or added to the list yet.
+                    Toast.makeText(
+                        context,
+                        "Form validated: ${draft.name}. Not saved yet.",
+                        Toast.LENGTH_LONG
+                    ).show()
+
                     navController.popBackStack()
                 }
             )
@@ -496,10 +565,55 @@ fun AppNavHost(
 
         // Menu Maintenance side
         composable(AppRoutes.MENU_MAINTENANCE) {
-            PlaceholderScreen(
-                title = "Menu Maintenance",
-                message = "Menu maintenance screen will be added here.",
-                onBack = {
+            val adminMenuViewModel: AdminMenuViewModel = viewModel()
+
+            AdminMenuRoute(
+                viewModel = adminMenuViewModel,
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToCreateMenuItem = { storeId ->
+                    navController.navigate(
+                        AppRoutes.createMenuItem(storeId)
+                    ) {
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
+        composable(
+            route = AppRoutes.CREATE_MENU_ITEM,
+            arguments = listOf(
+                navArgument("storeId") {
+                    type = NavType.IntType
+                }
+            )
+        ) { backStackEntry ->
+            val storeId = requireNotNull(
+                backStackEntry.arguments
+            ).getInt("storeId")
+
+            val adminAddItemViewModel: AdminAddItemViewModel = viewModel {
+                AdminAddItemViewModel(
+                    initialStoreId = storeId
+                )
+            }
+
+            AdminAddItemRoute(
+                viewModel = adminAddItemViewModel,
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onPublishItem = { draft ->
+                    // Frontend validation only.
+                    // Add repository/Supabase persistence here later.
+                    Toast.makeText(
+                        context,
+                        "Form validated: ${draft.name}. Not published yet.",
+                        Toast.LENGTH_LONG
+                    ).show()
+
                     navController.popBackStack()
                 }
             )
@@ -507,10 +621,11 @@ fun AppNavHost(
 
         // Order Reporting side
         composable(AppRoutes.ORDER_REPORTING) {
-            PlaceholderScreen(
-                title = "Order Reporting",
-                message = "Order reporting screen will be added here.",
-                onBack = {
+            val adminReportViewModel: AdminReportViewModel = viewModel()
+
+            AdminReportRoute(
+                viewModel = adminReportViewModel,
+                onNavigateBack = {
                     navController.popBackStack()
                 }
             )
