@@ -8,7 +8,7 @@ plugins {
 
 fun getLocalProperty(key: String): String {
     val properties = Properties()
-    val localPropertyFile = rootProject.file("local.propertis")
+    val localPropertyFile = rootProject.file("local.properties")
     if (localPropertyFile.exists()) {
         localPropertyFile.inputStream().use { properties.load(it) }
     }
@@ -69,11 +69,19 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+
+    // Image
+    implementation("io.coil-kt:coil-compose:2.7.0")
+    implementation("com.vanniktech:android-image-cropper:4.6.0")
+
     // viewmodel
     val lifecycle_version = "2.11.0"
 
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:${lifecycle_version}")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:${lifecycle_version}")
+
+    // user preferences
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
 
     // supabase
     implementation(platform("io.github.jan-tennert.supabase:bom:3.5.0"))

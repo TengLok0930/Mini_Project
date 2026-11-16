@@ -1,6 +1,7 @@
 package my.edu.tarc.tarumtfoodorderingsystem.navigation
 
 import android.content.pm.ApplicationInfo
+import android.widget.Toast
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
@@ -10,16 +11,20 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -28,8 +33,16 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.io.IOException
+import my.edu.tarc.tarumtfoodorderingsystem.data.local.UserPreferencesRepository
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.adminPanel.AdminPanelRoute
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.adminPanel.AdminPanelViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.canteenMaintenance.AdminCanteenRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.canteenMaintenance.AdminCanteenViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.canteenMaintenance.addCanteen.AdminAddCanteenRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.canteenMaintenance.addCanteen.AdminAddCanteenViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.LoginAuthenticator
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.LoginRoute
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.LoginViewModel
@@ -45,6 +58,7 @@ import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.register.Registrat
 object AppRoutes {
 
     // Auth
+    const val AUTH_GATE = "auth_gate"
     const val LOGIN = "login"
     const val EMAIL_LOGIN = "email_login"
     const val OTP_LOGIN = "otp_login"
@@ -59,6 +73,7 @@ object AppRoutes {
     // Admin
     const val ADMIN = "admin"
     const val CANTEEN_MAINTENANCE = "canteen_maintenance"
+    const val CREATE_CANTEEN = "create_canteen"
     const val STORE_MAINTENANCE = "store_maintenance"
     const val MENU_MAINTENANCE = "menu_maintenance"
     const val ORDER_REPORTING = "order_reporting"
@@ -70,15 +85,68 @@ object AppRoutes {
 fun AppNavHost(
     authRepository: LoginAuthenticator,
     registrationService: RegistrationService,
+    userPreferencesRepository: UserPreferencesRepository,
     isDarkTheme: Boolean,
     onDarkThemeChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ){
     val navController = rememberNavController()
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    fun navigateAfterLogin(role: TestLoginRole) {
+        scope.launch {
+            try {
+                userPreferencesRepository.saveLogin(role.name)
+            } catch (exception: IOException) {
+                Toast.makeText(
+                    context,
+                    "Signed in, but your login could not be remembered.",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+
+            val destination = when (role) {
+                TestLoginRole.CUSTOMER -> AppRoutes.CUSTOMER
+                TestLoginRole.WORKER -> AppRoutes.WORKER
+                TestLoginRole.ADMIN -> AppRoutes.ADMIN
+            }
+
+            navController.navigate(destination) {
+                popUpTo(AppRoutes.LOGIN) {
+                    inclusive = true
+                }
+
+                launchSingleTop = true
+            }
+        }
+    }
+
+    fun logoutUser() {
+        scope.launch {
+            try {
+                userPreferencesRepository.clearLogin()
+
+                navController.navigate(AppRoutes.LOGIN) {
+                    popUpTo(navController.graph.id) {
+                        inclusive = true
+                    }
+
+                    launchSingleTop = true
+                }
+            } catch (exception: IOException) {
+                Toast.makeText(
+                    context,
+                    "Unable to clear your saved login. Please try again.",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+    }
 
     NavHost(
         navController = navController,
-        startDestination = AppRoutes.LOGIN,
+        startDestination = AppRoutes.AUTH_GATE,
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
@@ -115,6 +183,43 @@ fun AppNavHost(
             )
         }
     ) {
+        composable(
+            route = AppRoutes.AUTH_GATE,
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None }
+        ) {
+            LaunchedEffect(userPreferencesRepository) {
+                val role = userPreferencesRepository.userRole.first()
+
+                val destination = when (role) {
+                    "CUSTOMER" -> AppRoutes.CUSTOMER
+                    "WORKER" -> AppRoutes.WORKER
+                    "ADMIN" -> AppRoutes.ADMIN
+                    else -> AppRoutes.LOGIN
+                }
+
+                navController.navigate(destination) {
+                    popUpTo(AppRoutes.AUTH_GATE) {
+                        inclusive = true
+                    }
+
+                    launchSingleTop = true
+                }
+            }
+
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.background
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+        }
+
         /////////////////////////////////////////////////////////
         //////////////////// AUTH SCREENS ///////////////////////
         /////////////////////////////////////////////////////////
@@ -156,14 +261,7 @@ fun AppNavHost(
                     }
                 },
                 onLoginSuccess = { role ->
-                    val destination = when (role) {
-                        TestLoginRole.CUSTOMER -> AppRoutes.CUSTOMER
-                        TestLoginRole.WORKER -> AppRoutes.WORKER
-                        TestLoginRole.ADMIN -> AppRoutes.ADMIN
-                    }
-                    navController.navigate(destination) {
-                        launchSingleTop = true
-                    }
+                    navigateAfterLogin(role)
                 }
             )
         }
@@ -237,26 +335,18 @@ fun AppNavHost(
                     },
 
                     onVerificationSuccess = {
-                        // Frontend test destination only.
-                        // Real OTP authentication will later return the account role.
-                        val destination = if (
+                        val role = if (
                             email.trim().equals(
                                 other = "worker@tarc.edu.my",
                                 ignoreCase = true
                             )
                         ) {
-                            AppRoutes.WORKER
+                            TestLoginRole.WORKER
                         } else {
-                            AppRoutes.CUSTOMER
+                            TestLoginRole.CUSTOMER
                         }
 
-                        navController.navigate(destination) {
-                            popUpTo(AppRoutes.LOGIN) {
-                                inclusive = true
-                            }
-
-                            launchSingleTop = true
-                        }
+                        navigateAfterLogin(role)
                     }
                 )
             }
@@ -346,28 +436,54 @@ fun AppNavHost(
                 },
 
                 onLogout = {
-                    // Frontend navigation only
-                    navController.navigate(AppRoutes.LOGIN) {
-                        popUpTo(navController.graph.id) {
-                            inclusive = true
-                        }
+                    logoutUser()
+                }
+            )
+        }
 
+        // Canteen Maintenance side
+        composable(AppRoutes.CANTEEN_MAINTENANCE) {
+            val adminCanteenViewModel: AdminCanteenViewModel = viewModel()
+
+            AdminCanteenRoute(
+                viewModel = adminCanteenViewModel,
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToCreateCanteen = {
+                    navController.navigate(AppRoutes.CREATE_CANTEEN) {
                         launchSingleTop = true
                     }
                 }
             )
         }
 
-        composable(AppRoutes.CANTEEN_MAINTENANCE) {
-            PlaceholderScreen(
-                title = "Canteen Maintenance",
-                message = "Canteen maintenance screen will be added here.",
-                onBack = {
+        composable(AppRoutes.CREATE_CANTEEN) {
+            val context = LocalContext.current
+
+            val adminAddCanteenViewModel: AdminAddCanteenViewModel = viewModel()
+
+            AdminAddCanteenRoute(
+                viewModel = adminAddCanteenViewModel,
+
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+
+                onCreateCanteen = { draft ->
+                    // Front end test
+                    Toast.makeText(
+                        context,
+                        "Form validated: ${draft.name}. Not saved yet.",
+                        Toast.LENGTH_LONG
+                    ).show()
+
                     navController.popBackStack()
                 }
             )
         }
 
+        // Store Maintenance side
         composable(AppRoutes.STORE_MAINTENANCE) {
             PlaceholderScreen(
                 title = "Store Maintenance",
@@ -378,6 +494,7 @@ fun AppNavHost(
             )
         }
 
+        // Menu Maintenance side
         composable(AppRoutes.MENU_MAINTENANCE) {
             PlaceholderScreen(
                 title = "Menu Maintenance",
@@ -388,6 +505,7 @@ fun AppNavHost(
             )
         }
 
+        // Order Reporting side
         composable(AppRoutes.ORDER_REPORTING) {
             PlaceholderScreen(
                 title = "Order Reporting",

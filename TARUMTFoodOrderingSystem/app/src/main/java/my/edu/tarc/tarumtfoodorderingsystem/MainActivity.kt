@@ -9,6 +9,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import my.edu.tarc.tarumtfoodorderingsystem.data.local.UserPreferencesRepository
 import my.edu.tarc.tarumtfoodorderingsystem.navigation.AppNavHost
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.LoginAuthenticator
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.TestLoginRole
@@ -16,6 +17,9 @@ import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.register.Registrat
 import my.edu.tarc.tarumtfoodorderingsystem.ui.theme.TARUMTFoodOrderingSystemTheme
 
 class MainActivity : ComponentActivity() {
+
+    // Repositories
+    private val userPreferencesRepository by lazy { UserPreferencesRepository(applicationContext) }
 
     // This is a placeholder because supabase not implemented yet (Need replace later)
     private val authRepository: LoginAuthenticator by lazy {
@@ -53,6 +57,7 @@ class MainActivity : ComponentActivity() {
                 AppNavHost(
                     authRepository = authRepository,
                     registrationService = registrationService,
+                    userPreferencesRepository = userPreferencesRepository,
                     isDarkTheme = isDarkTheme,
                     onDarkThemeChanged = { enabled ->
                         isDarkTheme = enabled
