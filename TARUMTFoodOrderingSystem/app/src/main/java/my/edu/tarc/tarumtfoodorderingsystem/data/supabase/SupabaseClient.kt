@@ -1,4 +1,4 @@
-package my.edu.tarc.tarumtfoodorderingsystem
+package my.edu.tarc.tarumtfoodorderingsystem.data
 
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
