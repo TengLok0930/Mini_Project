@@ -156,9 +156,9 @@ fun AdminStoreScreen(
                         ) { store ->
                             AdminStoreRow(
                                 store = store,
-                                onRemoveClick = {
+                                onEditClick = {
                                     onAction(
-                                        AdminStoreAction.RemoveStoreClicked(
+                                        AdminStoreAction.EditStoreClicked(
                                             storeId = store.id
                                         )
                                     )
@@ -194,48 +194,6 @@ fun AdminStoreScreen(
                 }
             }
         }
-    }
-
-    uiState.pendingRemoval?.let { store ->
-        AlertDialog(
-            onDismissRequest = {
-                onAction(AdminStoreAction.DismissRemoveClicked)
-            },
-            title = {
-                Text("Remove store?")
-            },
-            text = {
-                Text(
-                    text = "Remove \"${store.name}\" from " +
-                            "\"${uiState.selectedCanteen?.name.orEmpty()}\"?"
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        onAction(
-                            AdminStoreAction.ConfirmRemoveClicked
-                        )
-                    },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = colors.error
-                    )
-                ) {
-                    Text("Remove")
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        onAction(
-                            AdminStoreAction.DismissRemoveClicked
-                        )
-                    }
-                ) {
-                    Text("Cancel")
-                }
-            }
-        )
     }
 }
 
@@ -314,7 +272,7 @@ private fun StoreCanteenDropdown(
 @Composable
 private fun AdminStoreRow(
     store: AdminStoreItem,
-    onRemoveClick: () -> Unit
+    onEditClick: () -> Unit
 ) {
     val colors = MaterialTheme.colorScheme
 
@@ -341,43 +299,41 @@ private fun AdminStoreRow(
                 Spacer(Modifier.height(10.dp))
 
                 Text(
-                    text = "${store.foodCount} " +
-                            if (store.foodCount == 1) {
-                                "Food Available"
-                            } else {
-                                "Foods Available"
-                            },
+                    text = if (store.foodCount == 1) {
+                        "1 Food Available"
+                    } else {
+                        "${store.foodCount} Foods Available"
+                    },
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.onSurfaceVariant
                 )
 
                 Text(
-                    text = "${store.beverageCount} " +
-                            if (store.beverageCount == 1) {
-                                "Beverage Available"
-                            } else {
-                                "Beverages Available"
-                            },
+                    text = if (store.beverageCount == 1) {
+                        "1 Beverage Available"
+                    } else {
+                        "${store.beverageCount} Beverages Available"
+                    },
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.onSurfaceVariant
                 )
             }
 
             Button(
-                onClick = onRemoveClick,
+                onClick = onEditClick,
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF970F0F),
+                    containerColor = Color(0xFF8E00D6),
                     contentColor = Color(0xFFDCB2FB)
                 ),
                 contentPadding = PaddingValues(
-                    horizontal = 12.dp,
+                    horizontal = 24.dp,
                     vertical = 10.dp
                 ),
                 modifier = Modifier.heightIn(min = 52.dp)
             ) {
                 Text(
-                    text = "Remove",
+                    text = "Edit",
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold
                 )

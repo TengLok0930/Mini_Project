@@ -16,14 +16,12 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -104,9 +102,9 @@ fun AdminCanteenScreen(
                     ) { canteen ->
                         AdminCanteenRow(
                             canteen = canteen,
-                            onRemoveClick = {
+                            onEditClick = {
                                 onAction(
-                                    AdminCanteenAction.RemoveCanteenClicked(
+                                    AdminCanteenAction.EditCanteenClicked(
                                         canteenId = canteen.id
                                     )
                                 )
@@ -130,53 +128,12 @@ fun AdminCanteenScreen(
             }
         }
     }
-
-    uiState.pendingRemoval?.let { canteen ->
-        AlertDialog(
-            onDismissRequest = {
-                onAction(AdminCanteenAction.DismissRemoveClicked)
-            },
-            title = {
-                Text("Remove canteen?")
-            },
-            text = {
-                Text(
-                    text = "Remove \"${canteen.name}\" from the canteen list?"
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        onAction(
-                            AdminCanteenAction.ConfirmRemoveClicked
-                        )
-                    },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = colors.error
-                    )
-                ) {
-                    Text("Remove")
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        onAction(
-                            AdminCanteenAction.DismissRemoveClicked
-                        )
-                    }
-                ) {
-                    Text("Cancel")
-                }
-            }
-        )
-    }
 }
 
 @Composable
 private fun AdminCanteenRow(
     canteen: AdminCanteenItem,
-    onRemoveClick: () -> Unit
+    onEditClick: () -> Unit
 ) {
     val colors = MaterialTheme.colorScheme
 
@@ -214,20 +171,20 @@ private fun AdminCanteenRow(
             }
 
             Button(
-                onClick = onRemoveClick,
+                onClick = onEditClick,
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF970F0F),
+                    containerColor = Color(0xFF8E00D6),
                     contentColor = Color(0xFFDCB2FB)
                 ),
                 contentPadding = PaddingValues(
-                    horizontal = 12.dp,
+                    horizontal = 24.dp,
                     vertical = 8.dp
                 ),
                 modifier = Modifier.heightIn(min = 48.dp)
             ) {
                 Text(
-                    text = "Remove",
+                    text = "Edit",
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold
                 )

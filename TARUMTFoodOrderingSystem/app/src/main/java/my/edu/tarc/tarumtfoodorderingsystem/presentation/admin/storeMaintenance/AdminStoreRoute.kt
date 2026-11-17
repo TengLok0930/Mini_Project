@@ -10,6 +10,7 @@ fun AdminStoreRoute(
     viewModel: AdminStoreViewModel,
     onNavigateBack: () -> Unit,
     onNavigateToCreateStore: (Int) -> Unit,
+    onNavigateToEditStore: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -24,14 +25,24 @@ fun AdminStoreRoute(
                 }
 
                 AdminStoreAction.CreateStoreClicked -> {
-                    val selectedCanteen = uiState.selectedCanteen
-
-                    if (selectedCanteen != null) {
-                        onNavigateToCreateStore(selectedCanteen.id)
+                    uiState.selectedCanteen?.let { canteen ->
+                        onNavigateToCreateStore(canteen.id)
                     }
                 }
 
-                else -> viewModel.onAction(action)
+                is AdminStoreAction.EditStoreClicked -> {
+                    val store = uiState.visibleStores.firstOrNull {
+                        it.id == action.storeId
+                    }
+
+                    if (store != null) {
+                        onNavigateToEditStore(store.id)
+                    }
+                }
+
+                is AdminStoreAction.CanteenSelected -> {
+                    viewModel.onAction(action)
+                }
             }
         }
     )

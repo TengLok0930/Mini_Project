@@ -6,11 +6,7 @@ sealed interface AdminCanteenAction {
 
     data object CreateCanteenClicked : AdminCanteenAction
 
-    data class RemoveCanteenClicked(
+    data class EditCanteenClicked(
         val canteenId: Int
     ) : AdminCanteenAction
-
-    data object ConfirmRemoveClicked : AdminCanteenAction
-
-    data object DismissRemoveClicked : AdminCanteenAction
 }

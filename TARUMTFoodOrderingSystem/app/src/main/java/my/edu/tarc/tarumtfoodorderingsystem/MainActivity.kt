@@ -1,6 +1,7 @@
 package my.edu.tarc.tarumtfoodorderingsystem
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -9,6 +10,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import kotlinx.io.IOException
 import my.edu.tarc.tarumtfoodorderingsystem.data.local.UserPreferencesRepository
 import my.edu.tarc.tarumtfoodorderingsystem.navigation.AppNavHost
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.LoginAuthenticator
@@ -47,9 +52,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             val systemDarkTheme = isSystemInDarkTheme()
 
-            var isDarkTheme by rememberSaveable {
-                mutableStateOf(systemDarkTheme)
-            }
+            val savedDarkTheme by userPreferencesRepository.isDarkTheme
+                .collectAsStateWithLifecycle(
+                    initialValue = null
+                )
+
+            val isDarkTheme = savedDarkTheme ?: systemDarkTheme
 
             TARUMTFoodOrderingSystemTheme(
                 darkTheme = isDarkTheme
@@ -60,7 +68,19 @@ class MainActivity : ComponentActivity() {
                     userPreferencesRepository = userPreferencesRepository,
                     isDarkTheme = isDarkTheme,
                     onDarkThemeChanged = { enabled ->
-                        isDarkTheme = enabled
+                        lifecycleScope.launch {
+                            try {
+                                userPreferencesRepository.saveDarkTheme(
+                                    isDarkTheme = enabled
+                                )
+                            } catch (exception: IOException) {
+                                Toast.makeText(
+                                    this@MainActivity,
+                                    "Unable to save appearance. Please try again.",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                        }
                     }
                 )
             }

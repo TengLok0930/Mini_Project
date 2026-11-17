@@ -45,6 +45,8 @@ import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.canteenMaintenanc
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.canteenMaintenance.AdminCanteenViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.canteenMaintenance.addCanteen.AdminAddCanteenRoute
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.canteenMaintenance.addCanteen.AdminAddCanteenViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.canteenMaintenance.editCanteen.AdminEditCanteenRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.canteenMaintenance.editCanteen.AdminEditCanteenViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.menuMaintenance.AdminMenuRoute
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.menuMaintenance.AdminMenuViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.menuMaintenance.addMenuItem.AdminAddItemRoute
@@ -55,6 +57,8 @@ import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.storeMaintenance.
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.storeMaintenance.AdminStoreViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.storeMaintenance.addStore.AdminAddStoreRoute
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.storeMaintenance.addStore.AdminAddStoreViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.storeMaintenance.editStore.AdminEditStoreRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.storeMaintenance.editStore.AdminEditStoreViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.LoginAuthenticator
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.LoginRoute
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.LoginViewModel
@@ -66,6 +70,12 @@ import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.otp.OTPLoginViewMo
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.register.RegisterRoute
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.register.RegisterViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.register.RegistrationService
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.canteen.CanteenRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.canteen.CanteenViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.store.StoreRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.store.StoreViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.profile.CustomerProfileRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.profile.CustomerProfileViewModel
 
 object AppRoutes {
 
@@ -78,6 +88,13 @@ object AppRoutes {
 
     // Customer
     const val CUSTOMER = "customer"
+    const val CUSTOMER_STORES = "customer_stores/{canteenId}"
+
+    fun customerStores(canteenId: Int): String {
+        return "customer_stores/$canteenId"
+    }
+
+    const val CUSTOMER_PROFILE = "customer_profile"
 
     // Worker
     const val WORKER = "worker"
@@ -86,11 +103,23 @@ object AppRoutes {
     const val ADMIN = "admin"
     const val CANTEEN_MAINTENANCE = "canteen_maintenance"
     const val CREATE_CANTEEN = "create_canteen"
+    const val EDIT_CANTEEN = "edit_canteen/{canteenId}"
+
+    fun editCanteen(canteenId: Int): String {
+        return "edit_canteen/$canteenId"
+    }
+
     const val STORE_MAINTENANCE = "store_maintenance"
     const val CREATE_STORE = "create_store/{canteenId}"
 
     fun createStore(canteenId: Int): String {
         return "create_store/$canteenId"
+    }
+
+    const val EDIT_STORE = "edit_store/{storeId}"
+
+    fun editStore(storeId: Int): String {
+        return "edit_store/$storeId"
     }
     const val MENU_MAINTENANCE = "menu_maintenance"
     const val CREATE_MENU_ITEM = "create_menu_item/{storeId}"
@@ -400,15 +429,140 @@ fun AppNavHost(
         /////////////////////////////////////////////////////////
 
         composable(AppRoutes.CUSTOMER) {
-            PlaceholderScreen(
-                title = "Customer",
-                message = "Customer screen will be added here.",
-                onBack = {
-                    navController.popBackStack()
+            val context = LocalContext.current
+
+            val canteenViewModel: CanteenViewModel = viewModel()
+
+            CanteenRoute(
+                viewModel = canteenViewModel,
+                onNavigateToStores = { canteenId ->
+                    navController.navigate(AppRoutes.customerStores(canteenId)) {
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToOrders = {
+                    // Replace with customer Orders navigation later.
+                    Toast.makeText(
+                        context,
+                        "Orders screen will be added next.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                },
+                onNavigateToProfile = {
+                    navController.navigate(
+                        AppRoutes.CUSTOMER_PROFILE
+                    ) {
+                        popUpTo(AppRoutes.CUSTOMER) {
+                            inclusive = false
+                        }
+
+                        launchSingleTop = true
+                    }
                 }
             )
         }
 
+        // Home side
+        composable(
+            route = AppRoutes.CUSTOMER_STORES,
+            arguments = listOf(
+                navArgument("canteenId") {
+                    type = NavType.IntType
+                }
+            )
+        ) { backStackEntry ->
+            val context = LocalContext.current
+
+            val canteenId = requireNotNull(
+                backStackEntry.arguments
+            ).getInt("canteenId")
+
+            val storeViewModel: StoreViewModel = viewModel {
+                StoreViewModel(canteenId = canteenId)
+            }
+
+            StoreRoute(
+                viewModel = storeViewModel,
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToMenu = { storeId ->
+                    // Replace with customer menu navigation later.
+                    Toast.makeText(
+                        context,
+                        "Selected store ID: $storeId",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                },
+                onNavigateToOrders = {
+                    // Replace with customer Orders navigation later.
+                    Toast.makeText(
+                        context,
+                        "Orders screen will be added later.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                },
+                onNavigateToHome = {
+                    navController.popBackStack(
+                        route = AppRoutes.CUSTOMER,
+                        inclusive = false
+                    )
+                },
+                onNavigateToProfile = {
+                    navController.navigate(
+                        AppRoutes.CUSTOMER_PROFILE
+                    ) {
+                        popUpTo(AppRoutes.CUSTOMER) {
+                            inclusive = false
+                        }
+
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
+        // Order side
+
+        // Profile side
+        composable(
+            route = AppRoutes.CUSTOMER_PROFILE
+        ) {
+            val context = LocalContext.current
+
+            val customerProfileViewModel: CustomerProfileViewModel = viewModel()
+
+            CustomerProfileRoute(
+                viewModel = customerProfileViewModel,
+                isDarkTheme = isDarkTheme,
+                onDarkThemeChanged = onDarkThemeChanged,
+                onNavigateToOrders = {
+                    // Replace with your customer Orders destination later.
+                    Toast.makeText(
+                        context,
+                        "Orders screen will be added later.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                },
+                onNavigateToHome = {
+                    navController.popBackStack(
+                        route = AppRoutes.CUSTOMER,
+                        inclusive = false
+                    )
+                },
+                onNavigateToVouchers = {
+                    // Replace with your customer Vouchers destination later.
+                    Toast.makeText(
+                        context,
+                        "Vouchers screen will be added later.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                },
+                onLogoutRequested = {
+                    logoutUser()
+                }
+            )
+        }
         /////////////////////////////////////////////////////////
         /////////////////// WORKER SCREEN ///////////////////////
         /////////////////////////////////////////////////////////
@@ -476,7 +630,14 @@ fun AppNavHost(
                     navController.navigate(AppRoutes.CREATE_CANTEEN) {
                         launchSingleTop = true
                     }
-                }
+                },
+                onNavigateToEditCanteen = { canteenId ->
+                    navController.navigate(
+                        AppRoutes.editCanteen(canteenId)
+                    ) {
+                        launchSingleTop = true
+                    }
+                },
             )
         }
 
@@ -505,6 +666,64 @@ fun AppNavHost(
             )
         }
 
+        composable(
+            route = AppRoutes.EDIT_CANTEEN,
+            arguments = listOf(
+                navArgument("canteenId") {
+                    type = NavType.IntType
+                }
+            )
+        ) { backStackEntry ->
+            val context = LocalContext.current
+
+            val canteenId = requireNotNull(
+                backStackEntry.arguments
+            ).getInt("canteenId")
+
+            // Reuse the ViewModel belonging to the maintenance destination.
+            val maintenanceEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(
+                    AppRoutes.CANTEEN_MAINTENANCE
+                )
+            }
+
+            val maintenanceViewModel: AdminCanteenViewModel = viewModel(
+                viewModelStoreOwner = maintenanceEntry
+            )
+
+            val editViewModel: AdminEditCanteenViewModel = viewModel {
+                AdminEditCanteenViewModel(
+                    canteen = maintenanceViewModel.uiState.value
+                        .canteens
+                        .firstOrNull {
+                            it.id == canteenId
+                        }
+                )
+            }
+
+            AdminEditCanteenRoute(
+                viewModel = editViewModel,
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onUpdateCanteen = { draft ->
+                    maintenanceViewModel.updateCanteen(
+                        canteenId = draft.canteenId,
+                        name = draft.name,
+                        imageUri = draft.imageUri
+                    )
+
+                    Toast.makeText(
+                        context,
+                        "Canteen updated locally.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                    navController.popBackStack()
+                }
+            )
+        }
+
         // Store Maintenance side
         composable(AppRoutes.STORE_MAINTENANCE) {
             val adminStoreViewModel: AdminStoreViewModel = viewModel()
@@ -517,6 +736,13 @@ fun AppNavHost(
                 onNavigateToCreateStore = { canteenId ->
                     navController.navigate(
                         AppRoutes.createStore(canteenId)
+                    ) {
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToEditStore = { storeId ->
+                    navController.navigate(
+                        AppRoutes.editStore(storeId)
                     ) {
                         launchSingleTop = true
                     }
@@ -556,6 +782,71 @@ fun AppNavHost(
                         context,
                         "Form validated: ${draft.name}. Not saved yet.",
                         Toast.LENGTH_LONG
+                    ).show()
+
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(
+            route = AppRoutes.EDIT_STORE,
+            arguments = listOf(
+                navArgument("storeId") {
+                    type = NavType.IntType
+                }
+            )
+        ) { backStackEntry ->
+            val context = LocalContext.current
+
+            val storeId = requireNotNull(
+                backStackEntry.arguments
+            ).getInt("storeId")
+
+            // Reuse the existing Store Maintenance ViewModel.
+            val maintenanceEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(
+                    AppRoutes.STORE_MAINTENANCE
+                )
+            }
+
+            val maintenanceViewModel: AdminStoreViewModel = viewModel(
+                viewModelStoreOwner = maintenanceEntry
+            )
+
+            val editViewModel: AdminEditStoreViewModel = viewModel {
+                val state = maintenanceViewModel.uiState.value
+
+                val store = state.stores.firstOrNull {
+                    it.id == storeId
+                }
+
+                val canteen = state.canteens.firstOrNull {
+                    it.id == store?.canteenId
+                }
+
+                AdminEditStoreViewModel(
+                    store = store,
+                    canteen = canteen
+                )
+            }
+
+            AdminEditStoreRoute(
+                viewModel = editViewModel,
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onUpdateStore = { draft ->
+                    maintenanceViewModel.updateStore(
+                        storeId = draft.storeId,
+                        name = draft.name,
+                        imageUri = draft.imageUri
+                    )
+
+                    Toast.makeText(
+                        context,
+                        "Store updated locally.",
+                        Toast.LENGTH_SHORT
                     ).show()
 
                     navController.popBackStack()

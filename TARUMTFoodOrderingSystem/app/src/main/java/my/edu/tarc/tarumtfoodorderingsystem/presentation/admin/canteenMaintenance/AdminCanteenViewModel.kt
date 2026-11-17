@@ -8,12 +8,12 @@ import kotlinx.coroutines.flow.update
 data class AdminCanteenItem(
     val id: Int,
     val name: String,
-    val storeCount: Int
+    val storeCount: Int,
+    val imageUri: String? = null
 )
 
 data class AdminCanteenUiState(
-    val canteens: List<AdminCanteenItem> = emptyList(),
-    val pendingRemoval: AdminCanteenItem? = null
+    val canteens: List<AdminCanteenItem> = emptyList()
 )
 
 class AdminCanteenViewModel : ViewModel() {
@@ -53,48 +53,24 @@ class AdminCanteenViewModel : ViewModel() {
 
     val uiState = _uiState.asStateFlow()
 
-    fun onAction(action: AdminCanteenAction) {
-        when (action) {
-            is AdminCanteenAction.RemoveCanteenClicked -> {
-                _uiState.update { state ->
-                    state.copy(
-                        pendingRemoval = state.canteens.firstOrNull {
-                            it.id == action.canteenId
-                        }
-                    )
-                }
-            }
-
-            AdminCanteenAction.ConfirmRemoveClicked -> {
-                removeSelectedCanteen()
-            }
-
-            AdminCanteenAction.DismissRemoveClicked -> {
-                _uiState.update {
-                    it.copy(pendingRemoval = null)
-                }
-            }
-
-            // Navigation is handled by AdminCanteenRoute.
-            AdminCanteenAction.BackClicked,
-            AdminCanteenAction.CreateCanteenClicked -> Unit
-        }
-    }
-
-    private fun removeSelectedCanteen() {
+    fun updateCanteen(
+        canteenId: Int,
+        name: String,
+        imageUri: String
+    ) {
         _uiState.update { state ->
-            val selected = state.pendingRemoval
-
-            if (selected == null) {
-                state
-            } else {
-                state.copy(
-                    canteens = state.canteens.filterNot {
-                        it.id == selected.id
-                    },
-                    pendingRemoval = null
-                )
-            }
+            state.copy(
+                canteens = state.canteens.map { canteen ->
+                    if (canteen.id == canteenId) {
+                        canteen.copy(
+                            name = name,
+                            imageUri = imageUri
+                        )
+                    } else {
+                        canteen
+                    }
+                }
+            )
         }
     }
 }
