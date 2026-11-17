@@ -74,8 +74,14 @@ import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.canteen.C
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.canteen.CanteenViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.store.StoreRoute
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.store.StoreViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.orders.OrdersRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.orders.OrdersViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.orders.purchaseHistory.PurchaseHistoryRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.orders.purchaseHistory.PurchaseHistoryViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.profile.CustomerProfileRoute
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.profile.CustomerProfileViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.profile.voucher.VoucherRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.profile.voucher.VoucherViewModel
 
 object AppRoutes {
 
@@ -94,7 +100,10 @@ object AppRoutes {
         return "customer_stores/$canteenId"
     }
 
+    const val CUSTOMER_ORDERS = "customer_orders"
+    const val CUSTOMER_PURCHASE_HISTORY = "customer_purchase_history"
     const val CUSTOMER_PROFILE = "customer_profile"
+    const val CUSTOMER_VOUCHERS = "customer_vouchers"
 
     // Worker
     const val WORKER = "worker"
@@ -170,6 +179,26 @@ fun AppNavHost(
 
                 launchSingleTop = true
             }
+        }
+    }
+
+    fun navigateToCustomerOrders() {
+        navController.navigate(AppRoutes.CUSTOMER_ORDERS) {
+            popUpTo(AppRoutes.CUSTOMER) {
+                inclusive = false
+            }
+
+            launchSingleTop = true
+        }
+    }
+
+    fun navigateToCustomerProfile() {
+        navController.navigate(AppRoutes.CUSTOMER_PROFILE) {
+            popUpTo(AppRoutes.CUSTOMER) {
+                inclusive = false
+            }
+
+            launchSingleTop = true
         }
     }
 
@@ -441,23 +470,10 @@ fun AppNavHost(
                     }
                 },
                 onNavigateToOrders = {
-                    // Replace with customer Orders navigation later.
-                    Toast.makeText(
-                        context,
-                        "Orders screen will be added next.",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    navigateToCustomerOrders()
                 },
                 onNavigateToProfile = {
-                    navController.navigate(
-                        AppRoutes.CUSTOMER_PROFILE
-                    ) {
-                        popUpTo(AppRoutes.CUSTOMER) {
-                            inclusive = false
-                        }
-
-                        launchSingleTop = true
-                    }
+                    navigateToCustomerProfile()
                 }
             )
         }
@@ -495,12 +511,7 @@ fun AppNavHost(
                     ).show()
                 },
                 onNavigateToOrders = {
-                    // Replace with customer Orders navigation later.
-                    Toast.makeText(
-                        context,
-                        "Orders screen will be added later.",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    navigateToCustomerOrders()
                 },
                 onNavigateToHome = {
                     navController.popBackStack(
@@ -509,20 +520,80 @@ fun AppNavHost(
                     )
                 },
                 onNavigateToProfile = {
-                    navController.navigate(
-                        AppRoutes.CUSTOMER_PROFILE
-                    ) {
-                        popUpTo(AppRoutes.CUSTOMER) {
-                            inclusive = false
-                        }
-
-                        launchSingleTop = true
-                    }
+                    navigateToCustomerProfile()
                 }
             )
         }
 
         // Order side
+        composable(
+            route = AppRoutes.CUSTOMER_ORDERS,
+            exitTransition = {
+                if (targetState.destination.route == AppRoutes.CUSTOMER_PURCHASE_HISTORY) {
+                    ExitTransition.None
+                } else {
+                    null
+                }
+            },
+            popEnterTransition = {
+                if (initialState.destination.route == AppRoutes.CUSTOMER_PURCHASE_HISTORY) {
+                    EnterTransition.None
+                } else {
+                    null
+                }
+            }
+        ) {
+            val ordersViewModel: OrdersViewModel = viewModel()
+
+            OrdersRoute(
+                viewModel = ordersViewModel,
+                isDarkTheme = isDarkTheme,
+                onNavigateToPurchaseHistory = {
+                    navController.navigate(
+                        AppRoutes.CUSTOMER_PURCHASE_HISTORY
+                    ) {
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToHome = {
+                    navController.popBackStack(
+                        route = AppRoutes.CUSTOMER,
+                        inclusive = false
+                    )
+                },
+                onNavigateToProfile = {
+                    navigateToCustomerProfile()
+                }
+            )
+        }
+
+        composable(route = AppRoutes.CUSTOMER_PURCHASE_HISTORY) {
+            val purchaseHistoryViewModel: PurchaseHistoryViewModel = viewModel()
+
+            PurchaseHistoryRoute(
+                viewModel = purchaseHistoryViewModel,
+                isDarkTheme = isDarkTheme,
+                onNavigateToOrders = {
+                    val returnedToOrders = navController.popBackStack(
+                        route = AppRoutes.CUSTOMER_ORDERS,
+                        inclusive = false
+                    )
+
+                    if (!returnedToOrders) {
+                        navigateToCustomerOrders()
+                    }
+                },
+                onNavigateToHome = {
+                    navController.popBackStack(
+                        route = AppRoutes.CUSTOMER,
+                        inclusive = false
+                    )
+                },
+                onNavigateToProfile = {
+                    navigateToCustomerProfile()
+                }
+            )
+        }
 
         // Profile side
         composable(
@@ -537,12 +608,7 @@ fun AppNavHost(
                 isDarkTheme = isDarkTheme,
                 onDarkThemeChanged = onDarkThemeChanged,
                 onNavigateToOrders = {
-                    // Replace with your customer Orders destination later.
-                    Toast.makeText(
-                        context,
-                        "Orders screen will be added later.",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    navigateToCustomerOrders()
                 },
                 onNavigateToHome = {
                     navController.popBackStack(
@@ -551,15 +617,46 @@ fun AppNavHost(
                     )
                 },
                 onNavigateToVouchers = {
-                    // Replace with your customer Vouchers destination later.
-                    Toast.makeText(
-                        context,
-                        "Vouchers screen will be added later.",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    navController.navigate(
+                        AppRoutes.CUSTOMER_VOUCHERS
+                    ) {
+                        launchSingleTop = true
+                    }
                 },
                 onLogoutRequested = {
                     logoutUser()
+                }
+            )
+        }
+
+        composable(
+            route = AppRoutes.CUSTOMER_VOUCHERS
+        ) {
+            val voucherViewModel: VoucherViewModel = viewModel()
+
+            VoucherRoute(
+                viewModel = voucherViewModel,
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToOrders = {
+                    navigateToCustomerOrders()
+                },
+                onNavigateToHome = {
+                    navController.popBackStack(
+                        route = AppRoutes.CUSTOMER,
+                        inclusive = false
+                    )
+                },
+                onNavigateToProfile = {
+                    val returnedToProfile = navController.popBackStack(
+                        route = AppRoutes.CUSTOMER_PROFILE,
+                        inclusive = false
+                    )
+
+                    if (!returnedToProfile) {
+                        navigateToCustomerProfile()
+                    }
                 }
             )
         }
