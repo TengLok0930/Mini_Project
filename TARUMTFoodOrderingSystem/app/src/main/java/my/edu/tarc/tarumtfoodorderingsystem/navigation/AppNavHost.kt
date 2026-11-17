@@ -72,6 +72,10 @@ import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.register.RegisterV
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.register.RegistrationService
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.canteen.CanteenRoute
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.canteen.CanteenViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.cart.CartRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.cart.CartViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.menu.MenuRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.menu.MenuViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.store.StoreRoute
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.store.StoreViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.orders.OrdersRoute
@@ -99,6 +103,39 @@ object AppRoutes {
     fun customerStores(canteenId: Int): String {
         return "customer_stores/$canteenId"
     }
+
+    const val CUSTOMER_MENU = "customer_menu/{storeId}?storeName={storeName}&canteenName={canteenName}"
+
+    fun customerMenu(
+        storeId: Int,
+        storeName: String,
+        canteenName: String
+    ): String {
+        val encodedStoreName = android.net.Uri.encode(storeName)
+        val encodedCanteenName = android.net.Uri.encode(canteenName)
+
+        return "customer_menu/$storeId" +
+                "?storeName=$encodedStoreName" +
+                "&canteenName=$encodedCanteenName"
+    }
+
+    const val CUSTOMER_CART =
+        "customer_cart/{storeId}?storeName={storeName}&canteenName={canteenName}"
+
+    fun customerCart(
+        storeId: Int,
+        storeName: String,
+        canteenName: String
+    ): String {
+        val encodedStoreName = android.net.Uri.encode(storeName)
+        val encodedCanteenName = android.net.Uri.encode(canteenName)
+
+        return "customer_cart/$storeId" +
+                "?storeName=$encodedStoreName" +
+                "&canteenName=$encodedCanteenName"
+    }
+
+    const val CUSTOMER_PAYMENT = "customer_payment"
 
     const val CUSTOMER_ORDERS = "customer_orders"
     const val CUSTOMER_PURCHASE_HISTORY = "customer_purchase_history"
@@ -503,12 +540,31 @@ fun AppNavHost(
                     navController.popBackStack()
                 },
                 onNavigateToMenu = { storeId ->
-                    // Replace with customer menu navigation later.
-                    Toast.makeText(
-                        context,
-                        "Selected store ID: $storeId",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    val state = storeViewModel.uiState.value
+
+                    val selectedStore = state.availableStores.firstOrNull {
+                        it.id == storeId
+                    }
+
+                    val selectedCanteen = state.canteen
+
+                    if (selectedStore != null && selectedCanteen != null) {
+                        navController.navigate(
+                            AppRoutes.customerMenu(
+                                storeId = selectedStore.id,
+                                storeName = selectedStore.name,
+                                canteenName = selectedCanteen.name
+                            )
+                        ) {
+                            launchSingleTop = true
+                        }
+                    } else {
+                        Toast.makeText(
+                            context,
+                            "This store is unavailable. Please select another store.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 },
                 onNavigateToOrders = {
                     navigateToCustomerOrders()
@@ -521,6 +577,136 @@ fun AppNavHost(
                 },
                 onNavigateToProfile = {
                     navigateToCustomerProfile()
+                }
+            )
+        }
+
+        composable(
+            route = AppRoutes.CUSTOMER_MENU,
+            arguments = listOf(
+                navArgument("storeId") {
+                    type = NavType.IntType
+                },
+                navArgument("storeName") {
+                    type = NavType.StringType
+                    defaultValue = "Store"
+                },
+                navArgument("canteenName") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                }
+            )
+        ) { backStackEntry ->
+            val arguments = requireNotNull(
+                backStackEntry.arguments
+            )
+
+            val storeId = arguments.getInt("storeId")
+
+            val storeName = arguments.getString("storeName")
+                ?: "Store"
+
+            val canteenName = arguments.getString("canteenName")
+                .orEmpty()
+
+            val menuViewModel: MenuViewModel = viewModel {
+                MenuViewModel(
+                    storeId = storeId,
+                    storeName = storeName,
+                    canteenName = canteenName
+                )
+            }
+
+            MenuRoute(
+                viewModel = menuViewModel,
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToCart = {
+                    val state = menuViewModel.uiState.value
+
+                    navController.navigate(
+                        AppRoutes.customerCart(
+                            storeId = state.storeId,
+                            storeName = state.storeName,
+                            canteenName = state.canteenName
+                        )
+                    ) {
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToItemDetails = { itemId ->
+                    // Temporary until the Item Details screen is implemented.
+                    Toast.makeText(
+                        context,
+                        "Selected menu item ID: $itemId",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            )
+        }
+
+        // Cart side (From menu)
+        composable(
+            route = AppRoutes.CUSTOMER_CART,
+            arguments = listOf(
+                navArgument("storeId") {
+                    type = NavType.IntType
+                },
+                navArgument("storeName") {
+                    type = NavType.StringType
+                    defaultValue = "Store"
+                },
+                navArgument("canteenName") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                }
+            )
+        ) {backStackEntry ->
+            val arguments = requireNotNull(
+                backStackEntry.arguments
+            )
+
+            val storeId = arguments.getInt("storeId")
+
+            val storeName = arguments.getString("storeName")
+                ?: "Store"
+
+            val canteenName = arguments.getString("canteenName")
+                .orEmpty()
+
+            val cartViewModel: CartViewModel = viewModel {
+                CartViewModel(
+                    storeId = storeId,
+                    storeName = storeName,
+                    canteenName = canteenName
+                )
+            }
+
+            CartRoute(
+                viewModel = cartViewModel,
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToPayment = {
+                    navController.navigate(
+                        AppRoutes.CUSTOMER_PAYMENT
+                    ) {
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
+        // Payment
+        composable(
+            route = AppRoutes.CUSTOMER_PAYMENT
+        ) {
+            PlaceholderScreen(
+                title = "Payment",
+                message = "The Payment screen will be added here.",
+                onBack = {
+                    navController.popBackStack()
                 }
             )
         }
