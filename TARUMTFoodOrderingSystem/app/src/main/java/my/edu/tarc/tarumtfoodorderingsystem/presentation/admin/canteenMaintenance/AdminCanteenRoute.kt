@@ -10,6 +10,7 @@ fun AdminCanteenRoute(
     viewModel: AdminCanteenViewModel,
     onNavigateBack: () -> Unit,
     onNavigateToCreateCanteen: () -> Unit,
+    onNavigateToEditCanteen: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -27,7 +28,15 @@ fun AdminCanteenRoute(
                     onNavigateToCreateCanteen()
                 }
 
-                else -> viewModel.onAction(action)
+                is AdminCanteenAction.EditCanteenClicked -> {
+                    val canteen = uiState.canteens.firstOrNull {
+                        it.id == action.canteenId
+                    }
+
+                    if (canteen != null) {
+                        onNavigateToEditCanteen(canteen.id)
+                    }
+                }
             }
         }
     )

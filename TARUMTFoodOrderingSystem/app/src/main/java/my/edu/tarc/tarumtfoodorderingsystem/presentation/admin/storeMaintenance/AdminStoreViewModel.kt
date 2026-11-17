@@ -15,14 +15,14 @@ data class AdminStoreItem(
     val canteenId: Int,
     val name: String,
     val foodCount: Int,
-    val beverageCount: Int
+    val beverageCount: Int,
+    val imageUri: String? = null
 )
 
 data class AdminStoreUiState(
     val canteens: List<StoreCanteenOption> = emptyList(),
     val stores: List<AdminStoreItem> = emptyList(),
-    val selectedCanteenId: Int? = null,
-    val pendingRemoval: AdminStoreItem? = null
+    val selectedCanteenId: Int? = null
 ) {
     val selectedCanteen: StoreCanteenOption?
         get() = canteens.firstOrNull {
@@ -137,23 +137,10 @@ class AdminStoreViewModel : ViewModel() {
                 selectCanteen(action.canteenId)
             }
 
-            is AdminStoreAction.RemoveStoreClicked -> {
-                requestRemoval(action.storeId)
-            }
-
-            AdminStoreAction.ConfirmRemoveClicked -> {
-                removeSelectedStore()
-            }
-
-            AdminStoreAction.DismissRemoveClicked -> {
-                _uiState.update {
-                    it.copy(pendingRemoval = null)
-                }
-            }
-
-            // Handled by AdminStoreRoute.
+            // Navigation is handled by AdminStoreRoute.
             AdminStoreAction.BackClicked,
-            AdminStoreAction.CreateStoreClicked -> Unit
+            AdminStoreAction.CreateStoreClicked,
+            is AdminStoreAction.EditStoreClicked -> Unit
         }
     }
 
@@ -163,40 +150,30 @@ class AdminStoreViewModel : ViewModel() {
                 state
             } else {
                 state.copy(
-                    selectedCanteenId = canteenId,
-                    pendingRemoval = null
+                    selectedCanteenId = canteenId
                 )
             }
         }
     }
 
-    private fun requestRemoval(storeId: Int) {
+    fun updateStore(
+        storeId: Int,
+        name: String,
+        imageUri: String
+    ) {
         _uiState.update { state ->
             state.copy(
-                pendingRemoval = state.visibleStores.firstOrNull {
-                    it.id == storeId
+                stores = state.stores.map { store ->
+                    if (store.id == storeId) {
+                        store.copy(
+                            name = name,
+                            imageUri = imageUri
+                        )
+                    } else {
+                        store
+                    }
                 }
             )
-        }
-    }
-
-    private fun removeSelectedStore() {
-        _uiState.update { state ->
-            val selectedStore = state.pendingRemoval
-
-            if (
-                selectedStore == null ||
-                selectedStore.canteenId != state.selectedCanteenId
-            ) {
-                state.copy(pendingRemoval = null)
-            } else {
-                state.copy(
-                    stores = state.stores.filterNot {
-                        it.id == selectedStore.id
-                    },
-                    pendingRemoval = null
-                )
-            }
         }
     }
 }
