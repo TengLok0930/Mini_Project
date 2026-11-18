@@ -4,7 +4,12 @@ import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.menu.CustomerItemType
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.orderItem.DrinkOption
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.orderItem.OrderItemDraft
+import kotlin.plus
 
+val drinkOption: DrinkOption? = null
 data class CustomerCartItem(
     val id: Int,
     val menuItemId: Int,
@@ -15,7 +20,8 @@ data class CustomerCartItem(
     val maximumQuantity: Int,
     val remarks: String = "",
     val imageUrl: String? = null,
-    val imageRes: Int? = null
+    val imageRes: Int? = null,
+    val drinkOption: DrinkOption? = null
 ) {
     val lineTotalInSen: Long
         get() = unitPriceInSen * quantity
@@ -53,8 +59,16 @@ data class CartUiState(
         get() = items.isNotEmpty() &&
                 items.all {
                     it.storeId == storeId &&
-                            it.quantity > 0 &&
-                            it.quantity <= it.maximumQuantity
+                            it.quantity in 1..9
+                } &&
+                items.groupBy {
+                    it.menuItemId
+                }.values.all { lines ->
+                    lines.sumOf {
+                        it.quantity
+                    } <= lines.minOf {
+                        it.maximumQuantity
+                    }
                 }
 }
 
@@ -69,9 +83,7 @@ class CartViewModel(
             storeId = storeId,
             storeName = storeName,
             canteenName = canteenName,
-            items = createSampleCartItems(
-                storeId = storeId
-            )
+            items = emptyList()
         )
     )
 
@@ -97,7 +109,7 @@ class CartViewModel(
             is CartAction.RemarksChanged -> {
                 _uiState.update {
                     it.copy(
-                        editedRemarks = action.remarks
+                        editedRemarks = action.remarks.take(240)
                     )
                 }
             }
@@ -158,11 +170,26 @@ class CartViewModel(
             return
         }
 
-        if (quantity > item.maximumQuantity) {
+        val quantityInOtherLines = state.items
+            .filter {
+                it.menuItemId == item.menuItemId &&
+                        it.id != item.id
+            }
+            .sumOf {
+                it.quantity
+            }
+
+        val maximumAllowed = minOf(
+            9,
+            (item.maximumQuantity - quantityInOtherLines)
+                .coerceAtLeast(0)
+        )
+
+        if (quantity > maximumAllowed) {
             _uiState.update {
                 it.copy(
                     quantityError =
-                        "Only ${item.maximumQuantity} available."
+                        "Maximum available quantity: $maximumAllowed."
                 )
             }
 
@@ -196,6 +223,78 @@ class CartViewModel(
                 }
             ).closeEditor()
         }
+    }
+
+    // Front-end functions
+    fun addItem(
+        draft: OrderItemDraft
+    ): Boolean {
+        val state = _uiState.value
+        val item = draft.item
+
+        if (item.storeId != state.storeId) {
+            return false
+        }
+
+        if (draft.quantity !in 1..9) {
+            return false
+        }
+
+        if (draft.remarks.length > 240) {
+            return false
+        }
+
+        if (
+            item.itemType == CustomerItemType.BEVERAGE &&
+            draft.drinkOption == null
+        ) {
+            return false
+        }
+
+        val quantityAlreadyInCart = state.items
+            .filter {
+                it.menuItemId == item.id
+            }
+            .sumOf {
+                it.quantity
+            }
+
+        if (
+            quantityAlreadyInCart + draft.quantity >
+            item.quantityRemaining
+        ) {
+            return false
+        }
+
+        val nextId = (state.items.maxOfOrNull { it.id } ?: 0) + 1
+
+        val cartItem = CustomerCartItem(
+            id = nextId,
+            menuItemId = item.id,
+            storeId = item.storeId,
+            name = item.name,
+            unitPriceInSen = item.priceInSen,
+            quantity = draft.quantity,
+            maximumQuantity = item.quantityRemaining,
+            remarks = draft.remarks.trim(),
+            imageUrl = item.imageUrl,
+            imageRes = item.imageRes,
+            drinkOption = if (
+                item.itemType == CustomerItemType.BEVERAGE
+            ) {
+                draft.drinkOption
+            } else {
+                null
+            }
+        )
+
+        _uiState.update {
+            it.copy(
+                items = it.items + cartItem
+            )
+        }
+
+        return true
     }
 }
 

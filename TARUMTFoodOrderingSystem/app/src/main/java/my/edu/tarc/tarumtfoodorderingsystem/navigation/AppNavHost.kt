@@ -23,13 +23,16 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -76,6 +79,12 @@ import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.cart.Cart
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.cart.CartViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.menu.MenuRoute
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.menu.MenuViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.orderItem.OrderItemRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.orderItem.OrderItemViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.payment.PaymentRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.payment.PaymentViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.payment.paymentSuccess.PaymentSuccessRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.payment.paymentSuccess.PaymentSuccessViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.store.StoreRoute
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.store.StoreViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.orders.OrdersRoute
@@ -119,6 +128,15 @@ object AppRoutes {
                 "&canteenName=$encodedCanteenName"
     }
 
+    const val CUSTOMER_ORDER_ITEM =
+        "customer_order_item/{itemId}"
+
+    fun customerOrderItem(
+        itemId: Int
+    ): String {
+        return "customer_order_item/$itemId"
+    }
+
     const val CUSTOMER_CART =
         "customer_cart/{storeId}?storeName={storeName}&canteenName={canteenName}"
 
@@ -136,9 +154,17 @@ object AppRoutes {
     }
 
     const val CUSTOMER_PAYMENT = "customer_payment"
+    const val CUSTOMER_PAYMENT_SUCCESS = "customer_payment_success/{orderId}"
 
+    fun customerPaymentSuccess(orderId: Int): String {
+        return "customer_payment_success/$orderId"
+    }
+
+    // Order side
     const val CUSTOMER_ORDERS = "customer_orders"
     const val CUSTOMER_PURCHASE_HISTORY = "customer_purchase_history"
+
+    // Profile side
     const val CUSTOMER_PROFILE = "customer_profile"
     const val CUSTOMER_VOUCHERS = "customer_vouchers"
 
@@ -636,14 +662,106 @@ fun AppNavHost(
                     }
                 },
                 onNavigateToItemDetails = { itemId ->
-                    // Temporary until the Item Details screen is implemented.
-                    Toast.makeText(
-                        context,
-                        "Selected menu item ID: $itemId",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    navController.navigate(
+                        AppRoutes.customerOrderItem(
+                            itemId = itemId
+                        )
+                    ) {
+                        launchSingleTop = true
+                    }
                 }
             )
+        }
+
+        composable(
+            route = AppRoutes.CUSTOMER_ORDER_ITEM,
+            arguments = listOf(
+                navArgument("itemId") {
+                    type = NavType.IntType
+                }
+            )
+        ) { backStackEntry ->
+            val itemId = requireNotNull(
+                backStackEntry.arguments
+            ).getInt("itemId")
+
+            val menuEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(
+                    AppRoutes.CUSTOMER_MENU
+                )
+            }
+
+            val menuViewModel = customerMenuViewModel(
+                menuEntry = menuEntry
+            )
+
+            val cartViewModel = customerCartViewModel(
+                menuEntry = menuEntry
+            )
+
+            val cartState by cartViewModel.uiState.collectAsStateWithLifecycle()
+
+            val item = menuViewModel.uiState.value.storeItems
+                .firstOrNull {
+                    it.id == itemId
+                }
+
+            if (item == null) {
+                PlaceholderScreen(
+                    title = "Item unavailable",
+                    message = "Return to the menu and select another item.",
+                    onBack = {
+                        navController.popBackStack()
+                    }
+                )
+            } else {
+                val quantityAlreadyInCart = cartState.items
+                    .filter {
+                        it.menuItemId == item.id
+                    }
+                    .sumOf {
+                        it.quantity
+                    }
+
+                val availableQuantity = (
+                        item.quantityRemaining - quantityAlreadyInCart
+                        ).coerceAtLeast(0)
+
+                val orderItemViewModel: OrderItemViewModel = viewModel {
+                    OrderItemViewModel(
+                        item = item
+                    )
+                }
+
+                OrderItemRoute(
+                    viewModel = orderItemViewModel,
+                    availableQuantity = availableQuantity,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+                    onAddToCart = { draft ->
+                        val added = cartViewModel.addItem(
+                            draft = draft
+                        )
+
+                        if (added) {
+                            Toast.makeText(
+                                context,
+                                "Added to cart",
+                                Toast.LENGTH_SHORT
+                            ).show()
+
+                            navController.popBackStack()
+                        } else {
+                            Toast.makeText(
+                                context,
+                                "Unable to add this quantity. Please check availability.",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    }
+                )
+            }
         }
 
         // Cart side (From menu)
@@ -662,26 +780,16 @@ fun AppNavHost(
                     defaultValue = ""
                 }
             )
-        ) {backStackEntry ->
-            val arguments = requireNotNull(
-                backStackEntry.arguments
-            )
-
-            val storeId = arguments.getInt("storeId")
-
-            val storeName = arguments.getString("storeName")
-                ?: "Store"
-
-            val canteenName = arguments.getString("canteenName")
-                .orEmpty()
-
-            val cartViewModel: CartViewModel = viewModel {
-                CartViewModel(
-                    storeId = storeId,
-                    storeName = storeName,
-                    canteenName = canteenName
+        ) { backStackEntry ->
+            val menuEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(
+                    AppRoutes.CUSTOMER_MENU
                 )
             }
+
+            val cartViewModel = customerCartViewModel(
+                menuEntry = menuEntry
+            )
 
             CartRoute(
                 viewModel = cartViewModel,
@@ -701,14 +809,122 @@ fun AppNavHost(
         // Payment
         composable(
             route = AppRoutes.CUSTOMER_PAYMENT
-        ) {
-            PlaceholderScreen(
-                title = "Payment",
-                message = "The Payment screen will be added here.",
-                onBack = {
+        ) { backStackEntry ->
+            val menuEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(
+                    AppRoutes.CUSTOMER_MENU
+                )
+            }
+
+            val customerEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(
+                    AppRoutes.CUSTOMER
+                )
+            }
+
+            val cartViewModel = customerCartViewModel(
+                menuEntry = menuEntry
+            )
+
+            val ordersViewModel: OrdersViewModel = viewModel(
+                viewModelStoreOwner = customerEntry
+            )
+
+            val paymentViewModel: PaymentViewModel = viewModel {
+                PaymentViewModel(
+                    cartState = cartViewModel.uiState
+                )
+            }
+
+            PaymentRoute(
+                viewModel = paymentViewModel,
+                onNavigateBack = {
                     navController.popBackStack()
+                },
+                onRequestPayment = { request ->
+                    val cartState = cartViewModel.uiState.value
+
+                    val order = ordersViewModel.completeDemoPayment(
+                        request = request,
+                        storeName = cartState.storeName,
+                        canteenName = cartState.canteenName
+                    )
+
+                    if (order == null) {
+                        paymentViewModel.allowPaymentRetry()
+
+                        Toast.makeText(
+                            context,
+                            "All pickup numbers are currently in use. Please try again later.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    } else {
+                        navController.navigate(
+                            AppRoutes.customerPaymentSuccess(
+                                orderId = order.id
+                            )
+                        ) {
+                            popUpTo(AppRoutes.CUSTOMER) {
+                                inclusive = false
+                            }
+
+                            launchSingleTop = true
+                        }
+                    }
                 }
             )
+        }
+
+        composable(
+            route = AppRoutes.CUSTOMER_PAYMENT_SUCCESS,
+            arguments = listOf(
+                navArgument("orderId") {
+                    type = NavType.IntType
+                }
+            )
+        ) { backStackEntry ->
+            val orderId = requireNotNull(
+                backStackEntry.arguments
+            ).getInt("orderId")
+
+            val customerEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(
+                    AppRoutes.CUSTOMER
+                )
+            }
+
+            val ordersViewModel: OrdersViewModel = viewModel(
+                viewModelStoreOwner = customerEntry
+            )
+
+            val order = ordersViewModel.uiState.value.orders
+                .firstOrNull {
+                    it.id == orderId
+                }
+
+            if (order == null) {
+                PlaceholderScreen(
+                    title = "Receipt unavailable",
+                    message = "This demo receipt is no longer available. " +
+                            "Orders are stored in memory only.",
+                    onBack = {
+                        navigateToCustomerOrders()
+                    }
+                )
+            } else {
+                val paymentSuccessViewModel: PaymentSuccessViewModel = viewModel {
+                    PaymentSuccessViewModel(
+                        order = order
+                    )
+                }
+
+                PaymentSuccessRoute(
+                    viewModel = paymentSuccessViewModel,
+                    onNavigateToOrders = {
+                        navigateToCustomerOrders()
+                    }
+                )
+            }
         }
 
         // Order side
@@ -729,7 +945,15 @@ fun AppNavHost(
                 }
             }
         ) {
-            val ordersViewModel: OrdersViewModel = viewModel()
+            val customerEntry = remember(navController) {
+                navController.getBackStackEntry(
+                    AppRoutes.CUSTOMER
+                )
+            }
+
+            val ordersViewModel: OrdersViewModel = viewModel(
+                viewModelStoreOwner = customerEntry
+            )
 
             OrdersRoute(
                 viewModel = ordersViewModel,
@@ -1204,6 +1428,48 @@ fun AppNavHost(
                 }
             )
         }
+    }
+}
+
+@Composable
+private fun customerMenuViewModel(
+    menuEntry: NavBackStackEntry
+): MenuViewModel {
+    val arguments = requireNotNull(
+        menuEntry.arguments
+    )
+
+    return viewModel(
+        viewModelStoreOwner = menuEntry
+    ) {
+        MenuViewModel(
+            storeId = arguments.getInt("storeId"),
+            storeName = arguments.getString("storeName")
+                ?: "Store",
+            canteenName = arguments.getString("canteenName")
+                .orEmpty()
+        )
+    }
+}
+
+@Composable
+private fun customerCartViewModel(
+    menuEntry: NavBackStackEntry
+): CartViewModel {
+    val arguments = requireNotNull(
+        menuEntry.arguments
+    )
+
+    return viewModel(
+        viewModelStoreOwner = menuEntry
+    ) {
+        CartViewModel(
+            storeId = arguments.getInt("storeId"),
+            storeName = arguments.getString("storeName")
+                ?: "Store",
+            canteenName = arguments.getString("canteenName")
+                .orEmpty()
+        )
     }
 }
 

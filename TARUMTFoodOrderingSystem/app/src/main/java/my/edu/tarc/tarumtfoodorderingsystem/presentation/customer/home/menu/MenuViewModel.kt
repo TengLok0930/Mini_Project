@@ -4,6 +4,11 @@ import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
+enum class CustomerItemType {
+    FOOD,
+    BEVERAGE
+}
+
 data class CustomerMenuItem(
     val id: Int,
     val storeId: Int,
@@ -13,7 +18,8 @@ data class CustomerMenuItem(
     val quantitySold: Int,
     val quantityRemaining: Int,
     val imageUrl: String? = null,
-    val imageRes: Int? = null
+    val imageRes: Int? = null,
+    val itemType: CustomerItemType = CustomerItemType.FOOD
 ) {
     val isAvailable: Boolean
         get() = quantityRemaining > 0
@@ -125,6 +131,16 @@ private fun createSampleMenuItems(
             priceInSen = 600L,
             quantitySold = 80,
             quantityRemaining = 35
+        ),
+        CustomerMenuItem(
+            id = 5,
+            storeId = storeId,
+            name = "Teh",
+            category = "Beverages",
+            priceInSen = 320L,
+            quantitySold = 53,
+            quantityRemaining = 31,
+            itemType = CustomerItemType.BEVERAGE
         )
     )
 }

@@ -345,15 +345,22 @@ private fun CustomerOrderCard(
 
             if (!isHistory) {
                 val message = when (order.status) {
-                    OrderStatus.ORDERED -> {
-                        "Your order has been received"
-                    }
-
+                    OrderStatus.ORDERED,
                     OrderStatus.PREPARING -> {
-                        order.estimatedWaitMinutes?.let { minutes ->
-                            val unit = if (minutes == 1) "min" else "mins"
-                            "Estimated Wait Time: $minutes $unit"
-                        } ?: "Your food is being prepared"
+                        val minutes = order.estimatedWaitMinutes
+                            ?: (
+                                    order.items.sumOf { item ->
+                                        item.quantity
+                                    } * 3
+                                    )
+
+                        val unit = if (minutes == 1) {
+                            "min"
+                        } else {
+                            "mins"
+                        }
+
+                        "Estimated Wait Time: $minutes $unit"
                     }
 
                     OrderStatus.READY -> {

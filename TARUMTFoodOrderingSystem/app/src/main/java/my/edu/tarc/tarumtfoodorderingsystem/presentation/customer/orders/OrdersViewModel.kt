@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import java.util.Calendar
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.payment.PaymentRequest
 
 enum class OrderStatus(
     val displayName: String
@@ -37,19 +38,58 @@ data class OrdersUiState(
     val orders: List<CustomerOrder> = emptyList()
 ) {
     val activeOrders: List<CustomerOrder>
-        get() = orders
-            .filter {
-                it.status == OrderStatus.ORDERED ||
-                        it.status == OrderStatus.PREPARING ||
-                        it.status == OrderStatus.READY
-            }
-            .sortedWith(
-                compareByDescending<CustomerOrder> {
-                    it.status == OrderStatus.READY
-                }.thenBy {
-                    it.placedAtMillis
+        get() {
+            val estimatesByOrderId = orders
+                .filter { order ->
+                    order.status == OrderStatus.ORDERED ||
+                            order.status == OrderStatus.PREPARING
                 }
-            )
+                .groupBy { order ->
+                    order.storeName to order.canteenName
+                }
+                .values
+                .flatMap { storeQueue ->
+                    storeQueue
+                        .sortedWith(
+                            compareBy<CustomerOrder> {
+                                it.placedAtMillis
+                            }.thenBy {
+                                it.id
+                            }
+                        )
+                        .mapIndexed { ordersAhead, order ->
+                            val preparationMinutes =
+                                order.items.sumOf { item ->
+                                    item.quantity
+                                } * 3
+
+                            order.id to (
+                                    preparationMinutes + ordersAhead
+                                    )
+                        }
+                }
+                .toMap()
+
+            return orders
+                .filter { order ->
+                    order.status != OrderStatus.DELIVERED
+                }
+                .map { order ->
+                    order.copy(
+                        estimatedWaitMinutes =
+                            estimatesByOrderId[order.id]
+                    )
+                }
+                .sortedWith(
+                    compareByDescending<CustomerOrder> {
+                        it.status == OrderStatus.READY
+                    }.thenBy {
+                        it.placedAtMillis
+                    }.thenBy {
+                        it.id
+                    }
+                )
+        }
 }
 
 class OrdersViewModel : ViewModel() {
@@ -61,6 +101,74 @@ class OrdersViewModel : ViewModel() {
     )
 
     val uiState = _uiState.asStateFlow()
+
+    // Frontend functions
+    fun completeDemoPayment(
+        request: PaymentRequest,
+        storeName: String,
+        canteenName: String
+    ): CustomerOrder? {
+        val state = _uiState.value
+
+        // Reserve pickup numbers already used by active orders.
+        val usedPickupNumbers = state.activeOrders
+            .mapNotNull {
+                it.pickupNumber.toIntOrNull()
+            }
+            .toSet()
+
+        val pickupNumber = (1..999).firstOrNull {
+            it !in usedPickupNumbers
+        } ?: return null
+
+        val nextOrderId = (
+                state.orders.maxOfOrNull {
+                    it.id
+                } ?: 0
+                ) + 1
+
+        val order = CustomerOrder(
+            id = nextOrderId,
+            pickupNumber = pickupNumber
+                .toString()
+                .padStart(3, '0'),
+            placedAtMillis = System.currentTimeMillis(),
+            status = OrderStatus.PREPARING,
+            items = request.items.map { cartItem ->
+                // Keep the existing Orders line model.
+                // Include the drink choice in its remarks summary.
+                val remarksSummary = listOfNotNull(
+                    cartItem.drinkOption?.let {
+                        "Drink: ${it.displayName}"
+                    },
+                    cartItem.remarks.takeIf {
+                        it.isNotBlank()
+                    }
+                )
+                    .joinToString(" · ")
+                    .takeIf {
+                        it.isNotBlank()
+                    }
+
+                CustomerOrderLine(
+                    id = cartItem.id,
+                    name = cartItem.name,
+                    quantity = cartItem.quantity,
+                    remarks = remarksSummary
+                )
+            },
+            totalInSen = request.totalInSen,
+            storeName = storeName,
+            canteenName = canteenName,
+            estimatedWaitMinutes = null
+        )
+
+        _uiState.value = state.copy(
+            orders = state.orders + order
+        )
+
+        return order
+    }
 }
 
 /**
@@ -179,3 +287,4 @@ internal fun customerOrderSampleData(): List<CustomerOrder> {
         )
     )
 }
+

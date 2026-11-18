@@ -24,10 +24,11 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import my.edu.tarc.tarumtfoodorderingsystem.ui.components.AppPaymentProceedButton
+import my.edu.tarc.tarumtfoodorderingsystem.ui.components.AppSecondActionButton
 import java.math.BigDecimal
 import java.util.Locale
 
@@ -54,7 +55,7 @@ fun CartScreen(
             )
         },
         bottomBar = {
-            AppPaymentProceedButton(
+            AppSecondActionButton(
                 title = "Proceed to payment",
                 enabled = uiState.canProceedToPayment,
                 onClick = {
@@ -231,6 +232,16 @@ private fun CustomerCartItemRow(
             if (item.remarks.isNotBlank()) {
                 Spacer(Modifier.height(6.dp))
 
+                item.drinkOption?.let { option ->
+                    Spacer(Modifier.height(6.dp))
+
+                    Text(
+                        text = "Drink: ${option.displayName}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onSurfaceVariant
+                    )
+                }
+
                 Text(
                     text = "Remarks: ${item.remarks}",
                     style = MaterialTheme.typography.bodySmall,
@@ -378,7 +389,14 @@ private fun ModifyCartItemDialog(
                         Text("Remarks (optional)")
                     },
                     minLines = 2,
-                    maxLines = 4
+                    maxLines = 4,
+                    supportingText = {
+                        Text(
+                            text = "${remarks.length}/240",
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.End
+                        )
+                    }
                 )
 
                 TextButton(

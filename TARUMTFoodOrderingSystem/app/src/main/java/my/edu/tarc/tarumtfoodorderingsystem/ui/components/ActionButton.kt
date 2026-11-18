@@ -1,6 +1,5 @@
 package my.edu.tarc.tarumtfoodorderingsystem.ui.components
 
-import android.R.attr.fontWeight
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -66,7 +65,7 @@ fun AppActionButton(
 }
 
 @Composable
-fun AppPaymentProceedButton(
+fun AppSecondActionButton(
     title: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
