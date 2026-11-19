@@ -19,7 +19,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import my.edu.tarc.tarumtfoodorderingsystem.ui.components.AppTopBar
+import my.edu.tarc.tarumtfoodorderingsystem.ui.components.AppCustomerTopBar
 import my.edu.tarc.tarumtfoodorderingsystem.ui.components.CustomerBottomBar
 import my.edu.tarc.tarumtfoodorderingsystem.ui.components.CustomerTab
 
@@ -36,11 +36,18 @@ fun StoreScreen(
         modifier = modifier.fillMaxSize(),
         containerColor = colors.background,
         topBar = {
-            AppTopBar(
+            AppCustomerTopBar(
                 title = "Choose a Store!",
                 subtitle = uiState.canteen?.name,
                 onBackClick = {
-                    onAction(StoreAction.BackClicked)
+                    onAction(
+                        StoreAction.BackClicked
+                    )
+                },
+                onInformationClick = {
+                    onAction(
+                        StoreAction.InformationClicked
+                    )
                 }
             )
         },

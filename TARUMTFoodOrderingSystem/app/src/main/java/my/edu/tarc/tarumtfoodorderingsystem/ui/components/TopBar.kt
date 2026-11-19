@@ -103,31 +103,93 @@ fun AppTopBar(
     )
 }
 
-/*
-Usage of Top Bar
-Can just call like this
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AppCustomerTopBar(
+    title: String,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null,
+    onBackClick: (() -> Unit)? = null,
+    onInformationClick: (() -> Unit)? = null,
+    @DrawableRes backIconResId: Int =
+        if (subtitle.isNullOrBlank()) {
+            R.drawable.arrow_back_48px
+        } else {
+            R.drawable.arrow_back_40px
+        },
+    backContentDescription: String = "Back"
+) {
+    val colors = MaterialTheme.colorScheme
+    val hasSubtitle = !subtitle.isNullOrBlank()
 
-1st way (With the logout)
-AppTopBar(
-    title = "Title",
-    onLogoutClick = {
-        onAction(Action.Logout)
-    }
-)
+    TopAppBar(
+        modifier = modifier,
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = colors.primary,
+            titleContentColor = colors.onPrimary,
+            navigationIconContentColor = colors.onPrimary,
+            actionIconContentColor = colors.onPrimary
+        ),
+        title = {
+            Column(
+                modifier = Modifier.padding(
+                    vertical = 4.dp
+                )
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
 
-2nd way (With back button only title)
-AppTopBar(
-    title = "Title",
-    onBackClick = {
-        onAction(Action.Back)
-    }
-)
+                if (hasSubtitle) {
+                    Spacer(
+                        modifier = Modifier.height(2.dp)
+                    )
 
-3rd way (With back button with title and subtitle)
-AppTopBar(
-    title = "Title",
-    subtitle = "$storeName · $canteenName",
-    onBackClick = Back
-)
- */
-
+                    Text(
+                        text = subtitle.orEmpty(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onPrimary.copy(
+                            alpha = 0.8f
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+        },
+        navigationIcon = {
+            if (onBackClick != null) {
+                IconButton(
+                    onClick = onBackClick
+                ) {
+                    Icon(
+                        painter = painterResource(
+                            id = backIconResId
+                        ),
+                        contentDescription = backContentDescription,
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
+            }
+        },
+        actions = {
+            if (onInformationClick != null) {
+                IconButton(
+                    onClick = onInformationClick
+                ) {
+                    Icon(
+                        painter = painterResource(
+                            id = R.drawable.info_40px
+                        ),
+                        contentDescription = "Ordering information",
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
+            }
+        }
+    )
+}

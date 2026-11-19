@@ -11,6 +11,7 @@ fun CanteenRoute(
     onNavigateToStores: (Int) -> Unit,
     onNavigateToOrders: () -> Unit,
     onNavigateToProfile: () -> Unit,
+    onNavigateToInformation: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -40,6 +41,10 @@ fun CanteenRoute(
 
                 CanteenAction.HomeClicked -> {
                     // Already on the Home destination.
+                }
+
+                CanteenAction.InformationClicked -> {
+                    onNavigateToInformation()
                 }
             }
         }

@@ -10,7 +10,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -19,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
 import my.edu.tarc.tarumtfoodorderingsystem.R
-import my.edu.tarc.tarumtfoodorderingsystem.ui.components.AppTopBar
+import my.edu.tarc.tarumtfoodorderingsystem.ui.components.AppCustomerTopBar
 import my.edu.tarc.tarumtfoodorderingsystem.ui.components.CustomerBottomBar
 import my.edu.tarc.tarumtfoodorderingsystem.ui.components.CustomerTab
 
@@ -36,7 +35,14 @@ fun CanteenScreen(
         modifier = modifier.fillMaxSize(),
         containerColor = colors.background,
         topBar = {
-            AppTopBar(title = "Canteen")
+            AppCustomerTopBar(
+                title = "Canteen",
+                onInformationClick = {
+                    onAction(
+                        CanteenAction.InformationClicked
+                    )
+                }
+            )
         },
         bottomBar = {
             CustomerBottomBar(

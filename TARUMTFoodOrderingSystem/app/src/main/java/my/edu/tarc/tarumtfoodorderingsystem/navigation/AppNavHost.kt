@@ -10,26 +10,22 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -72,10 +68,42 @@ import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.register.RegisterV
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.register.RegistrationService
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.canteen.CanteenRoute
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.canteen.CanteenViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.cart.CartRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.cart.CartViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.menu.MenuRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.menu.MenuViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.orderItem.OrderItemRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.orderItem.OrderItemViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.payment.PaymentRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.payment.PaymentViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.payment.paymentSuccess.PaymentSuccessRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.payment.paymentSuccess.PaymentSuccessViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.store.StoreRoute
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.store.StoreViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.info.InformationRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.info.InformationViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.orders.OrdersRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.orders.OrdersViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.orders.purchaseHistory.PurchaseHistoryRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.orders.purchaseHistory.PurchaseHistoryViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.profile.CustomerProfileRoute
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.profile.CustomerProfileViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.profile.voucher.VoucherRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.profile.voucher.VoucherViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.completedOrders.WorkerCompletedOrderRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.completedOrders.WorkerCompletedOrderViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.items.WorkerItemRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.items.WorkerItemViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.items.editItem.WorkerItemEditRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.items.editItem.WorkerItemEditViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.orders.WorkerOrderRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.orders.WorkerOrderViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.orders.pendingOrders.WorkerPendingOrderAction
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.orders.pendingOrders.WorkerPendingOrderRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.orders.pendingOrders.WorkerPendingOrderViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.orders.pickupOrders.WorkerPickupOrderRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.orders.pickupOrders.WorkerPickupOrderViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.ui.components.AppNoticeDialog
 
 object AppRoutes {
 
@@ -88,16 +116,83 @@ object AppRoutes {
 
     // Customer
     const val CUSTOMER = "customer"
+    const val CUSTOMER_INFORMATION = "customer_information"
     const val CUSTOMER_STORES = "customer_stores/{canteenId}"
 
     fun customerStores(canteenId: Int): String {
         return "customer_stores/$canteenId"
     }
 
+    const val CUSTOMER_MENU = "customer_menu/{storeId}?storeName={storeName}&canteenName={canteenName}"
+
+    fun customerMenu(
+        storeId: Int,
+        storeName: String,
+        canteenName: String
+    ): String {
+        val encodedStoreName = android.net.Uri.encode(storeName)
+        val encodedCanteenName = android.net.Uri.encode(canteenName)
+
+        return "customer_menu/$storeId" +
+                "?storeName=$encodedStoreName" +
+                "&canteenName=$encodedCanteenName"
+    }
+
+    const val CUSTOMER_ORDER_ITEM =
+        "customer_order_item/{itemId}"
+
+    fun customerOrderItem(
+        itemId: Int
+    ): String {
+        return "customer_order_item/$itemId"
+    }
+
+    const val CUSTOMER_CART =
+        "customer_cart/{storeId}?storeName={storeName}&canteenName={canteenName}"
+
+    fun customerCart(
+        storeId: Int,
+        storeName: String,
+        canteenName: String
+    ): String {
+        val encodedStoreName = android.net.Uri.encode(storeName)
+        val encodedCanteenName = android.net.Uri.encode(canteenName)
+
+        return "customer_cart/$storeId" +
+                "?storeName=$encodedStoreName" +
+                "&canteenName=$encodedCanteenName"
+    }
+
+    const val CUSTOMER_PAYMENT = "customer_payment"
+    const val CUSTOMER_PAYMENT_SUCCESS = "customer_payment_success/{orderId}"
+
+    fun customerPaymentSuccess(orderId: Int): String {
+        return "customer_payment_success/$orderId"
+    }
+
+    // Order side
+    const val CUSTOMER_ORDERS = "customer_orders"
+    const val CUSTOMER_PURCHASE_HISTORY = "customer_purchase_history"
+
+    // Profile side
     const val CUSTOMER_PROFILE = "customer_profile"
+    const val CUSTOMER_VOUCHERS = "customer_vouchers"
 
     // Worker
     const val WORKER = "worker"
+    const val WORKER_ACTIVE_ORDERS = "worker_active_orders"
+    const val WORKER_PICKUPS = "worker_pickups"
+
+    // Completed Order side
+    const val WORKER_COMPLETED_ORDERS = "worker_completed_orders"
+
+    // Items side
+    const val WORKER_ITEMS = "worker_items"
+    const val WORKER_EDIT_ITEM = "worker_edit_item/{itemId}"
+
+    fun workerEditItemRoute(itemId: Int): String {
+        return "worker_edit_item/$itemId"
+    }
 
     // Admin
     const val ADMIN = "admin"
@@ -145,6 +240,7 @@ fun AppNavHost(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
+    // Navigation helpers
     fun navigateAfterLogin(role: TestLoginRole) {
         scope.launch {
             try {
@@ -166,6 +262,53 @@ fun AppNavHost(
             navController.navigate(destination) {
                 popUpTo(AppRoutes.LOGIN) {
                     inclusive = true
+                }
+
+                launchSingleTop = true
+            }
+        }
+    }
+
+    fun navigateToCustomerOrders() {
+        navController.navigate(AppRoutes.CUSTOMER_ORDERS) {
+            popUpTo(AppRoutes.CUSTOMER) {
+                inclusive = false
+            }
+
+            launchSingleTop = true
+        }
+    }
+
+    fun navigateToCustomerProfile() {
+        navController.navigate(AppRoutes.CUSTOMER_PROFILE) {
+            popUpTo(AppRoutes.CUSTOMER) {
+                inclusive = false
+            }
+
+            launchSingleTop = true
+        }
+    }
+
+    fun navigateToInformation() {
+        navController.navigate(
+            AppRoutes.CUSTOMER_INFORMATION
+        ) {
+            launchSingleTop = true
+        }
+    }
+
+    fun navigateToWorkerDestination(
+        route: String
+    ) {
+        if (route == AppRoutes.WORKER) {
+            navController.popBackStack(
+                route = AppRoutes.WORKER,
+                inclusive = false
+            )
+        } else {
+            navController.navigate(route) {
+                popUpTo(AppRoutes.WORKER) {
+                    inclusive = false
                 }
 
                 launchSingleTop = true
@@ -359,13 +502,20 @@ fun AppNavHost(
             }
 
             if (email.isBlank()) {
-                PlaceholderScreen(
-                    title = "Email missing",
-                    message = "Go back and enter your registered email again.",
-                    onBack = {
-                        navController.popBackStack()
-                    }
-                )
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    AppNoticeDialog(
+                        title = "Email missing",
+                        message = "Please return and enter your registered " +
+                                "email before requesting a verification code.",
+                        confirmText = "Back to email",
+                        onClose = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
             } else {
                 val otpViewModel: OTPLoginViewModel = viewModel {
                     OTPLoginViewModel(
@@ -429,8 +579,6 @@ fun AppNavHost(
         /////////////////////////////////////////////////////////
 
         composable(AppRoutes.CUSTOMER) {
-            val context = LocalContext.current
-
             val canteenViewModel: CanteenViewModel = viewModel()
 
             CanteenRoute(
@@ -441,23 +589,13 @@ fun AppNavHost(
                     }
                 },
                 onNavigateToOrders = {
-                    // Replace with customer Orders navigation later.
-                    Toast.makeText(
-                        context,
-                        "Orders screen will be added next.",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    navigateToCustomerOrders()
                 },
                 onNavigateToProfile = {
-                    navController.navigate(
-                        AppRoutes.CUSTOMER_PROFILE
-                    ) {
-                        popUpTo(AppRoutes.CUSTOMER) {
-                            inclusive = false
-                        }
-
-                        launchSingleTop = true
-                    }
+                    navigateToCustomerProfile()
+                },
+                onNavigateToInformation = {
+                    navigateToInformation()
                 }
             )
         }
@@ -487,20 +625,34 @@ fun AppNavHost(
                     navController.popBackStack()
                 },
                 onNavigateToMenu = { storeId ->
-                    // Replace with customer menu navigation later.
-                    Toast.makeText(
-                        context,
-                        "Selected store ID: $storeId",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    val state = storeViewModel.uiState.value
+
+                    val selectedStore = state.availableStores.firstOrNull {
+                        it.id == storeId
+                    }
+
+                    val selectedCanteen = state.canteen
+
+                    if (selectedStore != null && selectedCanteen != null) {
+                        navController.navigate(
+                            AppRoutes.customerMenu(
+                                storeId = selectedStore.id,
+                                storeName = selectedStore.name,
+                                canteenName = selectedCanteen.name
+                            )
+                        ) {
+                            launchSingleTop = true
+                        }
+                    } else {
+                        Toast.makeText(
+                            context,
+                            "This store is unavailable. Please select another store.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 },
                 onNavigateToOrders = {
-                    // Replace with customer Orders navigation later.
-                    Toast.makeText(
-                        context,
-                        "Orders screen will be added later.",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    navigateToCustomerOrders()
                 },
                 onNavigateToHome = {
                     navController.popBackStack(
@@ -509,27 +661,452 @@ fun AppNavHost(
                     )
                 },
                 onNavigateToProfile = {
-                    navController.navigate(
-                        AppRoutes.CUSTOMER_PROFILE
-                    ) {
-                        popUpTo(AppRoutes.CUSTOMER) {
-                            inclusive = false
-                        }
+                    navigateToCustomerProfile()
+                },
+                onNavigateToInformation = {
+                    navigateToInformation()
+                }
+            )
+        }
 
+        composable(
+            route = AppRoutes.CUSTOMER_MENU,
+            arguments = listOf(
+                navArgument("storeId") {
+                    type = NavType.IntType
+                },
+                navArgument("storeName") {
+                    type = NavType.StringType
+                    defaultValue = "Store"
+                },
+                navArgument("canteenName") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                }
+            )
+        ) { backStackEntry ->
+            val arguments = requireNotNull(
+                backStackEntry.arguments
+            )
+
+            val storeId = arguments.getInt("storeId")
+
+            val storeName = arguments.getString("storeName")
+                ?: "Store"
+
+            val canteenName = arguments.getString("canteenName")
+                .orEmpty()
+
+            val menuViewModel: MenuViewModel = viewModel {
+                MenuViewModel(
+                    storeId = storeId,
+                    storeName = storeName,
+                    canteenName = canteenName
+                )
+            }
+
+            MenuRoute(
+                viewModel = menuViewModel,
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToCart = {
+                    val state = menuViewModel.uiState.value
+
+                    navController.navigate(
+                        AppRoutes.customerCart(
+                            storeId = state.storeId,
+                            storeName = state.storeName,
+                            canteenName = state.canteenName
+                        )
+                    ) {
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToItemDetails = { itemId ->
+                    navController.navigate(
+                        AppRoutes.customerOrderItem(
+                            itemId = itemId
+                        )
+                    ) {
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToInformation = {
+                    navigateToInformation()
+                }
+            )
+        }
+
+        composable(
+            route = AppRoutes.CUSTOMER_ORDER_ITEM,
+            arguments = listOf(
+                navArgument("itemId") {
+                    type = NavType.IntType
+                }
+            )
+        ) { backStackEntry ->
+            val itemId = requireNotNull(
+                backStackEntry.arguments
+            ).getInt("itemId")
+
+            val menuEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(
+                    AppRoutes.CUSTOMER_MENU
+                )
+            }
+
+            val menuViewModel = customerMenuViewModel(
+                menuEntry = menuEntry
+            )
+
+            val cartViewModel = customerCartViewModel(
+                menuEntry = menuEntry
+            )
+
+            val cartState by cartViewModel.uiState.collectAsStateWithLifecycle()
+
+            val menuState by menuViewModel.uiState.collectAsStateWithLifecycle()
+
+            val item = menuState.storeItems.firstOrNull {
+                it.id == itemId
+            }
+
+            if (item == null) {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    AppNoticeDialog(
+                        title = "Item unavailable",
+                        message = "This item is no longer available. " +
+                                "Please return to the menu and select another item.",
+                        confirmText = "Back to menu",
+                        onClose = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
+            } else {
+                val quantityAlreadyInCart = cartState.items
+                    .filter {
+                        it.menuItemId == item.id
+                    }
+                    .sumOf {
+                        it.quantity
+                    }
+
+                val availableQuantity = (
+                        item.quantityRemaining - quantityAlreadyInCart
+                        ).coerceAtLeast(0)
+
+                val orderItemViewModel: OrderItemViewModel = viewModel {
+                    OrderItemViewModel(
+                        item = item
+                    )
+                }
+
+                OrderItemRoute(
+                    viewModel = orderItemViewModel,
+                    availableQuantity = availableQuantity,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+                    onAddToCart = { draft ->
+                        val added = cartViewModel.addItem(
+                            draft = draft
+                        )
+
+                        if (added) {
+                            Toast.makeText(
+                                context,
+                                "Added to cart",
+                                Toast.LENGTH_SHORT
+                            ).show()
+
+                            navController.popBackStack()
+                        } else {
+                            Toast.makeText(
+                                context,
+                                "Unable to add this quantity. Please check availability.",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    }
+                )
+            }
+        }
+
+        // Cart side (From menu)
+        composable(
+            route = AppRoutes.CUSTOMER_CART,
+            arguments = listOf(
+                navArgument("storeId") {
+                    type = NavType.IntType
+                },
+                navArgument("storeName") {
+                    type = NavType.StringType
+                    defaultValue = "Store"
+                },
+                navArgument("canteenName") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                }
+            )
+        ) { backStackEntry ->
+            val menuEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(
+                    AppRoutes.CUSTOMER_MENU
+                )
+            }
+
+            val cartViewModel = customerCartViewModel(
+                menuEntry = menuEntry
+            )
+
+            CartRoute(
+                viewModel = cartViewModel,
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToPayment = {
+                    navController.navigate(
+                        AppRoutes.CUSTOMER_PAYMENT
+                    ) {
                         launchSingleTop = true
                     }
                 }
             )
         }
 
+        // Payment
+        composable(
+            route = AppRoutes.CUSTOMER_PAYMENT
+        ) { backStackEntry ->
+            val menuEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(
+                    AppRoutes.CUSTOMER_MENU
+                )
+            }
+
+            val customerEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(
+                    AppRoutes.CUSTOMER
+                )
+            }
+
+            val cartViewModel = customerCartViewModel(
+                menuEntry = menuEntry
+            )
+
+            val ordersViewModel: OrdersViewModel = viewModel(
+                viewModelStoreOwner = customerEntry
+            )
+
+            val paymentViewModel: PaymentViewModel = viewModel {
+                PaymentViewModel(
+                    cartState = cartViewModel.uiState
+                )
+            }
+
+            PaymentRoute(
+                viewModel = paymentViewModel,
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onRequestPayment = { request ->
+                    val cartState = cartViewModel.uiState.value
+
+                    val order = ordersViewModel.completeDemoPayment(
+                        request = request,
+                        storeName = cartState.storeName,
+                        canteenName = cartState.canteenName
+                    )
+
+                    if (order == null) {
+                        paymentViewModel.allowPaymentRetry()
+
+                        Toast.makeText(
+                            context,
+                            "All pickup numbers are currently in use. Please try again later.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    } else {
+                        navController.navigate(
+                            AppRoutes.customerPaymentSuccess(
+                                orderId = order.id
+                            )
+                        ) {
+                            popUpTo(AppRoutes.CUSTOMER) {
+                                inclusive = false
+                            }
+
+                            launchSingleTop = true
+                        }
+                    }
+                }
+            )
+        }
+
+        composable(
+            route = AppRoutes.CUSTOMER_PAYMENT_SUCCESS,
+            arguments = listOf(
+                navArgument("orderId") {
+                    type = NavType.IntType
+                }
+            )
+        ) { backStackEntry ->
+            val orderId = requireNotNull(
+                backStackEntry.arguments
+            ).getInt("orderId")
+
+            val customerEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(
+                    AppRoutes.CUSTOMER
+                )
+            }
+
+            val ordersViewModel: OrdersViewModel = viewModel(
+                viewModelStoreOwner = customerEntry
+            )
+
+            val ordersState by ordersViewModel.uiState.collectAsStateWithLifecycle()
+
+            val order = ordersState.orders.firstOrNull {
+                it.id == orderId
+            }
+
+            if (order == null) {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    AppNoticeDialog(
+                        title = "Receipt unavailable",
+                        message = "This receipt could not be found. " +
+                                "Demo orders are stored in memory only and " +
+                                "may no longer be available after the app restarts. " +
+                                "You can return to Orders to check the current list.",
+                        confirmText = "View orders",
+                        onClose = {
+                            navigateToCustomerOrders()
+                        }
+                    )
+                }
+            } else {
+                val paymentSuccessViewModel: PaymentSuccessViewModel = viewModel {
+                    PaymentSuccessViewModel(
+                        order = order
+                    )
+                }
+
+                PaymentSuccessRoute(
+                    viewModel = paymentSuccessViewModel,
+                    onNavigateToOrders = {
+                        navigateToCustomerOrders()
+                    }
+                )
+            }
+        }
+
         // Order side
+        composable(
+            route = AppRoutes.CUSTOMER_ORDERS,
+            exitTransition = {
+                if (targetState.destination.route == AppRoutes.CUSTOMER_PURCHASE_HISTORY) {
+                    ExitTransition.None
+                } else {
+                    null
+                }
+            },
+            popEnterTransition = {
+                if (initialState.destination.route == AppRoutes.CUSTOMER_PURCHASE_HISTORY) {
+                    EnterTransition.None
+                } else {
+                    null
+                }
+            }
+        ) { backStackEntry ->
+            val customerEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(
+                    AppRoutes.CUSTOMER
+                )
+            }
+
+            val ordersViewModel: OrdersViewModel = viewModel(
+                viewModelStoreOwner = customerEntry
+            )
+
+            OrdersRoute(
+                viewModel = ordersViewModel,
+                isDarkTheme = isDarkTheme,
+                onNavigateToPurchaseHistory = {
+                    navController.navigate(
+                        AppRoutes.CUSTOMER_PURCHASE_HISTORY
+                    ) {
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToHome = {
+                    navController.popBackStack(
+                        route = AppRoutes.CUSTOMER,
+                        inclusive = false
+                    )
+                },
+                onNavigateToProfile = {
+                    navigateToCustomerProfile()
+                }
+            )
+        }
+
+        composable(
+            route = AppRoutes.CUSTOMER_PURCHASE_HISTORY,
+            exitTransition = {
+                if (targetState.destination.route == AppRoutes.CUSTOMER_ORDERS) {
+                    ExitTransition.None
+                } else {
+                    null
+                }
+            },
+            popEnterTransition = {
+                if (initialState.destination.route == AppRoutes.CUSTOMER_ORDERS) {
+                    EnterTransition.None
+                } else {
+                    null
+                }
+            }
+        ) {
+            val purchaseHistoryViewModel: PurchaseHistoryViewModel = viewModel()
+
+            PurchaseHistoryRoute(
+                viewModel = purchaseHistoryViewModel,
+                isDarkTheme = isDarkTheme,
+                onNavigateToOrders = {
+                    val returnedToOrders = navController.popBackStack(
+                        route = AppRoutes.CUSTOMER_ORDERS,
+                        inclusive = false
+                    )
+
+                    if (!returnedToOrders) {
+                        navigateToCustomerOrders()
+                    }
+                },
+                onNavigateToHome = {
+                    navController.popBackStack(
+                        route = AppRoutes.CUSTOMER,
+                        inclusive = false
+                    )
+                },
+                onNavigateToProfile = {
+                    navigateToCustomerProfile()
+                }
+            )
+        }
 
         // Profile side
         composable(
             route = AppRoutes.CUSTOMER_PROFILE
         ) {
-            val context = LocalContext.current
-
             val customerProfileViewModel: CustomerProfileViewModel = viewModel()
 
             CustomerProfileRoute(
@@ -537,12 +1114,7 @@ fun AppNavHost(
                 isDarkTheme = isDarkTheme,
                 onDarkThemeChanged = onDarkThemeChanged,
                 onNavigateToOrders = {
-                    // Replace with your customer Orders destination later.
-                    Toast.makeText(
-                        context,
-                        "Orders screen will be added later.",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    navigateToCustomerOrders()
                 },
                 onNavigateToHome = {
                     navController.popBackStack(
@@ -551,28 +1123,391 @@ fun AppNavHost(
                     )
                 },
                 onNavigateToVouchers = {
-                    // Replace with your customer Vouchers destination later.
-                    Toast.makeText(
-                        context,
-                        "Vouchers screen will be added later.",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    navController.navigate(
+                        AppRoutes.CUSTOMER_VOUCHERS
+                    ) {
+                        launchSingleTop = true
+                    }
                 },
                 onLogoutRequested = {
                     logoutUser()
                 }
             )
         }
+
+        composable(
+            route = AppRoutes.CUSTOMER_VOUCHERS
+        ) {
+            val voucherViewModel: VoucherViewModel = viewModel()
+
+            VoucherRoute(
+                viewModel = voucherViewModel,
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToOrders = {
+                    navigateToCustomerOrders()
+                },
+                onNavigateToHome = {
+                    navController.popBackStack(
+                        route = AppRoutes.CUSTOMER,
+                        inclusive = false
+                    )
+                },
+                onNavigateToProfile = {
+                    val returnedToProfile = navController.popBackStack(
+                        route = AppRoutes.CUSTOMER_PROFILE,
+                        inclusive = false
+                    )
+
+                    if (!returnedToProfile) {
+                        navigateToCustomerProfile()
+                    }
+                }
+            )
+        }
+
+        // Information
+        composable(
+            route = AppRoutes.CUSTOMER_INFORMATION
+        ) {
+            val informationViewModel: InformationViewModel = viewModel()
+
+            InformationRoute(
+                viewModel = informationViewModel,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
         /////////////////////////////////////////////////////////
         /////////////////// WORKER SCREEN ///////////////////////
         /////////////////////////////////////////////////////////
 
-        composable(AppRoutes.WORKER) {
-            PlaceholderScreen(
-                title = "Worker",
-                message = "Worker screen will be added here.",
-                onBack = {
+        // Order side
+        composable(
+            route = AppRoutes.WORKER,
+            enterTransition = {
+                EnterTransition.None
+            },
+            exitTransition = {
+                ExitTransition.None
+            },
+            popEnterTransition = {
+                EnterTransition.None
+            },
+            popExitTransition = {
+                ExitTransition.None
+            }
+        ) {
+            val workerPendingOrderViewModel:
+                    WorkerPendingOrderViewModel = viewModel()
+
+            WorkerPendingOrderRoute(
+                viewModel = workerPendingOrderViewModel,
+                onNavigateToCompletedOrders = {
+                    navigateToWorkerDestination(
+                        AppRoutes.WORKER_COMPLETED_ORDERS
+                    )
+                },
+                onNavigateToItems = {
+                    navigateToWorkerDestination(
+                        AppRoutes.WORKER_ITEMS
+                    )
+                },
+                onNavigateToActiveOrders = {
+                    navigateToWorkerDestination(
+                        AppRoutes.WORKER_ACTIVE_ORDERS
+                    )
+                },
+                onNavigateToPickups = {
+                    navigateToWorkerDestination(
+                        AppRoutes.WORKER_PICKUPS
+                    )
+                },
+                onLogoutRequested = {
+                    logoutUser()
+                }
+            )
+        }
+
+        composable(
+            route = AppRoutes.WORKER_ACTIVE_ORDERS,
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
+            popExitTransition = { ExitTransition.None }
+        ) { backStackEntry ->
+            val workerEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(
+                    AppRoutes.WORKER
+                )
+            }
+
+            val workerPendingOrderViewModel:
+                    WorkerPendingOrderViewModel = viewModel(
+                viewModelStoreOwner = workerEntry
+            )
+
+            val workerOrderViewModel: WorkerOrderViewModel = viewModel {
+                WorkerOrderViewModel(
+                    sharedState = workerPendingOrderViewModel.uiState
+                )
+            }
+
+            WorkerOrderRoute(
+                viewModel = workerOrderViewModel,
+                onNavigateToPendingOrders = {
+                    navigateToWorkerDestination(
+                        AppRoutes.WORKER
+                    )
+                },
+                onNavigateToPickups = {
+                    navigateToWorkerDestination(
+                        AppRoutes.WORKER_PICKUPS
+                    )
+                },
+                onNavigateToCompletedOrders = {
+                    navigateToWorkerDestination(
+                        AppRoutes.WORKER_COMPLETED_ORDERS
+                    )
+                },
+                onNavigateToItems = {
+                    navigateToWorkerDestination(
+                        AppRoutes.WORKER_ITEMS
+                    )
+                },
+                onAcceptingOrdersChanged = { accepting ->
+                    workerPendingOrderViewModel.onAction(
+                        WorkerPendingOrderAction.AcceptingOrdersChanged(
+                            accepting = accepting
+                        )
+                    )
+                },
+                onMarkReadyForPickup = { orderId ->
+                    workerPendingOrderViewModel.markOrderReady(
+                        orderId = orderId
+                    )
+                },
+                onLogoutRequested = {
+                    logoutUser()
+                }
+            )
+        }
+
+        composable(
+            route = AppRoutes.WORKER_PICKUPS,
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
+            popExitTransition = { ExitTransition.None }
+        ) { backStackEntry ->
+            val workerEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(
+                    AppRoutes.WORKER
+                )
+            }
+
+            val workerPendingOrderViewModel:
+                    WorkerPendingOrderViewModel = viewModel(
+                viewModelStoreOwner = workerEntry
+            )
+
+            val workerPickupOrderViewModel:
+                    WorkerPickupOrderViewModel = viewModel {
+                WorkerPickupOrderViewModel(
+                    sharedState = workerPendingOrderViewModel.uiState
+                )
+            }
+
+            WorkerPickupOrderRoute(
+                viewModel = workerPickupOrderViewModel,
+                onNavigateToPendingOrders = {
+                    navigateToWorkerDestination(
+                        AppRoutes.WORKER
+                    )
+                },
+                onNavigateToActiveOrders = {
+                    navigateToWorkerDestination(
+                        AppRoutes.WORKER_ACTIVE_ORDERS
+                    )
+                },
+                onNavigateToCompletedOrders = {
+                    navigateToWorkerDestination(
+                        AppRoutes.WORKER_COMPLETED_ORDERS
+                    )
+                },
+                onNavigateToItems = {
+                    navigateToWorkerDestination(
+                        AppRoutes.WORKER_ITEMS
+                    )
+                },
+                onAcceptingOrdersChanged = { accepting ->
+                    workerPendingOrderViewModel.onAction(
+                        WorkerPendingOrderAction.AcceptingOrdersChanged(
+                            accepting = accepting
+                        )
+                    )
+                },
+                onConfirmCollection = { orderId ->
+                    workerPendingOrderViewModel.confirmOrderCollection(
+                        orderId = orderId
+                    )
+                },
+                onLogoutRequested = {
+                    logoutUser()
+                }
+            )
+        }
+
+        // Completed order side
+        composable(
+            route = AppRoutes.WORKER_COMPLETED_ORDERS
+        ) { backStackEntry ->
+            val workerEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(
+                    AppRoutes.WORKER
+                )
+            }
+
+            val workerPendingOrderViewModel:
+                    WorkerPendingOrderViewModel = viewModel(
+                viewModelStoreOwner = workerEntry
+            )
+
+            val workerCompletedOrderViewModel:
+                    WorkerCompletedOrderViewModel = viewModel {
+                WorkerCompletedOrderViewModel(
+                    sharedState = workerPendingOrderViewModel.uiState
+                )
+            }
+
+            WorkerCompletedOrderRoute(
+                viewModel = workerCompletedOrderViewModel,
+                onNavigateToOrders = {
+                    navigateToWorkerDestination(
+                        AppRoutes.WORKER
+                    )
+                },
+                onNavigateToItems = {
+                    navigateToWorkerDestination(
+                        AppRoutes.WORKER_ITEMS
+                    )
+                },
+                onLogoutRequested = {
+                    logoutUser()
+                }
+            )
+        }
+
+        // Items side
+        composable(
+            route = AppRoutes.WORKER_ITEMS
+        ) { backStackEntry ->
+            val workerEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(
+                    AppRoutes.WORKER
+                )
+            }
+
+            val workerPendingOrderViewModel:
+                    WorkerPendingOrderViewModel = viewModel(
+                viewModelStoreOwner = workerEntry
+            )
+
+            val workerItemViewModel: WorkerItemViewModel = viewModel(
+                viewModelStoreOwner = workerEntry
+            ) {
+                WorkerItemViewModel(
+                    sharedState = workerPendingOrderViewModel.uiState
+                )
+            }
+
+            WorkerItemRoute(
+                viewModel = workerItemViewModel,
+                onNavigateToOrders = {
+                    navigateToWorkerDestination(
+                        AppRoutes.WORKER
+                    )
+                },
+                onNavigateToCompletedOrders = {
+                    navigateToWorkerDestination(
+                        AppRoutes.WORKER_COMPLETED_ORDERS
+                    )
+                },
+                onNavigateToEditItem = { itemId ->
+                    navController.navigate(
+                        AppRoutes.workerEditItemRoute(
+                            itemId = itemId
+                        )
+                    ) {
+                        launchSingleTop = true
+                    }
+                },
+                onLogoutRequested = {
+                    logoutUser()
+                }
+            )
+        }
+
+        composable(
+            route = AppRoutes.WORKER_EDIT_ITEM,
+            arguments = listOf(
+                navArgument("itemId") {
+                    type = NavType.IntType
+                }
+            )
+        ) { backStackEntry ->
+            val itemId = requireNotNull(
+                backStackEntry.arguments
+            ).getInt("itemId")
+
+            val workerEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(
+                    AppRoutes.WORKER
+                )
+            }
+
+            val workerPendingOrderViewModel:
+                    WorkerPendingOrderViewModel = viewModel(
+                viewModelStoreOwner = workerEntry
+            )
+
+            val workerItemViewModel: WorkerItemViewModel = viewModel(
+                viewModelStoreOwner = workerEntry
+            ) {
+                WorkerItemViewModel(
+                    sharedState = workerPendingOrderViewModel.uiState
+                )
+            }
+
+            val workerItemEditViewModel:
+                    WorkerItemEditViewModel = viewModel {
+                val sharedState =
+                    workerPendingOrderViewModel.uiState.value
+
+                WorkerItemEditViewModel(
+                    itemId = itemId,
+                    initialItem = workerItemViewModel.findItem(
+                        itemId = itemId
+                    ),
+                    storeName = sharedState.storeName,
+                    canteenName = sharedState.canteenName
+                )
+            }
+
+            WorkerItemEditRoute(
+                viewModel = workerItemEditViewModel,
+                onNavigateBack = {
                     navController.popBackStack()
+                },
+                onSaveChanges = { values ->
+                    workerItemViewModel.updateItem(
+                        itemId = values.itemId,
+                        priceInSen = values.priceInSen,
+                        availableQuantity = values.availableQuantity
+                    )
                 }
             )
         }
@@ -924,41 +1859,44 @@ fun AppNavHost(
     }
 }
 
-// Delete when the screens are implemented
 @Composable
-private fun PlaceholderScreen(
-    title: String,
-    message: String,
-    onBack: () -> Unit
-) {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
+private fun customerMenuViewModel(
+    menuEntry: NavBackStackEntry
+): MenuViewModel {
+    val arguments = requireNotNull(
+        menuEntry.arguments
+    )
+
+    return viewModel(
+        viewModelStoreOwner = menuEntry
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .safeDrawingPadding()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(
-                space = 16.dp,
-                alignment = Alignment.CenterVertically
-            )
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.headlineSmall
-            )
+        MenuViewModel(
+            storeId = arguments.getInt("storeId"),
+            storeName = arguments.getString("storeName")
+                ?: "Store",
+            canteenName = arguments.getString("canteenName")
+                .orEmpty()
+        )
+    }
+}
 
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyMedium
-            )
+@Composable
+private fun customerCartViewModel(
+    menuEntry: NavBackStackEntry
+): CartViewModel {
+    val arguments = requireNotNull(
+        menuEntry.arguments
+    )
 
-            Button(onClick = onBack) {
-                Text("Back")
-            }
-        }
+    return viewModel(
+        viewModelStoreOwner = menuEntry
+    ) {
+        CartViewModel(
+            storeId = arguments.getInt("storeId"),
+            storeName = arguments.getString("storeName")
+                ?: "Store",
+            canteenName = arguments.getString("canteenName")
+                .orEmpty()
+        )
     }
 }
