@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.canteen.CanteenAction
 
 @Composable
 fun StoreRoute(
@@ -13,6 +14,7 @@ fun StoreRoute(
     onNavigateToOrders: () -> Unit,
     onNavigateToHome: () -> Unit,
     onNavigateToProfile: () -> Unit,
+    onNavigateToInformation: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -46,6 +48,10 @@ fun StoreRoute(
 
                 StoreAction.ProfileClicked -> {
                     onNavigateToProfile()
+                }
+
+                StoreAction.InformationClicked -> {
+                    onNavigateToInformation()
                 }
             }
         }

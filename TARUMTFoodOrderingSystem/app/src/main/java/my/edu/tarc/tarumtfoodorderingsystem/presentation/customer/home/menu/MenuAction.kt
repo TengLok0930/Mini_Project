@@ -9,4 +9,6 @@ sealed interface MenuAction {
     data class ItemClicked(
         val itemId: Int
     ) : MenuAction
+
+    data object InformationClicked : MenuAction
 }

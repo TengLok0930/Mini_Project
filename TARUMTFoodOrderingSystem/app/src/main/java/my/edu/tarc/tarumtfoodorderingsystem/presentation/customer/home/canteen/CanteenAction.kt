@@ -11,4 +11,6 @@ sealed interface CanteenAction {
     data object HomeClicked : CanteenAction
 
     data object ProfileClicked : CanteenAction
+
+    data object InformationClicked : CanteenAction
 }

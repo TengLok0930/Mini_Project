@@ -13,4 +13,6 @@ sealed interface StoreAction {
     data object HomeClicked : StoreAction
 
     data object ProfileClicked : StoreAction
+
+    data object InformationClicked : StoreAction
 }

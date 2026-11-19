@@ -80,6 +80,8 @@ import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.payment.p
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.payment.paymentSuccess.PaymentSuccessViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.store.StoreRoute
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.store.StoreViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.info.InformationRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.info.InformationViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.orders.OrdersRoute
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.orders.OrdersViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.orders.purchaseHistory.PurchaseHistoryRoute
@@ -114,6 +116,7 @@ object AppRoutes {
 
     // Customer
     const val CUSTOMER = "customer"
+    const val CUSTOMER_INFORMATION = "customer_information"
     const val CUSTOMER_STORES = "customer_stores/{canteenId}"
 
     fun customerStores(canteenId: Int): String {
@@ -282,6 +285,14 @@ fun AppNavHost(
                 inclusive = false
             }
 
+            launchSingleTop = true
+        }
+    }
+
+    fun navigateToInformation() {
+        navController.navigate(
+            AppRoutes.CUSTOMER_INFORMATION
+        ) {
             launchSingleTop = true
         }
     }
@@ -582,6 +593,9 @@ fun AppNavHost(
                 },
                 onNavigateToProfile = {
                     navigateToCustomerProfile()
+                },
+                onNavigateToInformation = {
+                    navigateToInformation()
                 }
             )
         }
@@ -648,6 +662,9 @@ fun AppNavHost(
                 },
                 onNavigateToProfile = {
                     navigateToCustomerProfile()
+                },
+                onNavigateToInformation = {
+                    navigateToInformation()
                 }
             )
         }
@@ -714,6 +731,9 @@ fun AppNavHost(
                     ) {
                         launchSingleTop = true
                     }
+                },
+                onNavigateToInformation = {
+                    navigateToInformation()
                 }
             )
         }
@@ -1146,6 +1166,21 @@ fun AppNavHost(
                 }
             )
         }
+
+        // Information
+        composable(
+            route = AppRoutes.CUSTOMER_INFORMATION
+        ) {
+            val informationViewModel: InformationViewModel = viewModel()
+
+            InformationRoute(
+                viewModel = informationViewModel,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
         /////////////////////////////////////////////////////////
         /////////////////// WORKER SCREEN ///////////////////////
         /////////////////////////////////////////////////////////

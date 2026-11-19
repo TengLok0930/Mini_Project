@@ -28,7 +28,7 @@ import coil.compose.AsyncImage
 import java.math.BigDecimal
 import java.util.Locale
 import my.edu.tarc.tarumtfoodorderingsystem.R
-import my.edu.tarc.tarumtfoodorderingsystem.ui.components.AppTopBar
+import my.edu.tarc.tarumtfoodorderingsystem.ui.components.AppCustomerTopBar
 
 @Composable
 fun MenuScreen(
@@ -46,11 +46,18 @@ fun MenuScreen(
         modifier = modifier.fillMaxSize(),
         containerColor = colors.background,
         topBar = {
-            AppTopBar(
+            AppCustomerTopBar(
                 title = "Choose an Item!",
                 subtitle = uiState.storeSubtitle,
                 onBackClick = {
-                    onAction(MenuAction.BackClicked)
+                    onAction(
+                        MenuAction.BackClicked
+                    )
+                },
+                onInformationClick = {
+                    onAction(
+                        MenuAction.InformationClicked
+                    )
                 }
             )
         },

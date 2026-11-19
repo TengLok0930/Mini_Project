@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.canteen.CanteenAction
 
 @Composable
 fun MenuRoute(
@@ -11,6 +12,7 @@ fun MenuRoute(
     onNavigateBack: () -> Unit,
     onNavigateToCart: () -> Unit,
     onNavigateToItemDetails: (Int) -> Unit,
+    onNavigateToInformation: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -36,6 +38,10 @@ fun MenuRoute(
                     if (selectedItem != null && selectedItem.isAvailable) {
                         onNavigateToItemDetails(selectedItem.id)
                     }
+                }
+
+                MenuAction.InformationClicked -> {
+                    onNavigateToInformation()
                 }
             }
         }
