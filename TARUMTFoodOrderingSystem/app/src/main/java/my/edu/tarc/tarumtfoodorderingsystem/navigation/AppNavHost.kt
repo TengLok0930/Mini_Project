@@ -10,17 +10,11 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -29,7 +23,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
@@ -97,6 +90,10 @@ import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.profile.vouche
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.profile.voucher.VoucherViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.completedOrders.WorkerCompletedOrderRoute
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.completedOrders.WorkerCompletedOrderViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.items.WorkerItemRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.items.WorkerItemViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.items.editItem.WorkerItemEditRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.items.editItem.WorkerItemEditViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.orders.WorkerOrderRoute
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.orders.WorkerOrderViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.orders.pendingOrders.WorkerPendingOrderAction
@@ -104,6 +101,7 @@ import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.orders.pendingOr
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.orders.pendingOrders.WorkerPendingOrderViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.orders.pickupOrders.WorkerPickupOrderRoute
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.orders.pickupOrders.WorkerPickupOrderViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.ui.components.AppNoticeDialog
 
 object AppRoutes {
 
@@ -187,6 +185,11 @@ object AppRoutes {
 
     // Items side
     const val WORKER_ITEMS = "worker_items"
+    const val WORKER_EDIT_ITEM = "worker_edit_item/{itemId}"
+
+    fun workerEditItemRoute(itemId: Int): String {
+        return "worker_edit_item/$itemId"
+    }
 
     // Admin
     const val ADMIN = "admin"
@@ -488,13 +491,20 @@ fun AppNavHost(
             }
 
             if (email.isBlank()) {
-                PlaceholderScreen(
-                    title = "Email missing",
-                    message = "Go back and enter your registered email again.",
-                    onBack = {
-                        navController.popBackStack()
-                    }
-                )
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    AppNoticeDialog(
+                        title = "Email missing",
+                        message = "Please return and enter your registered " +
+                                "email before requesting a verification code.",
+                        confirmText = "Back to email",
+                        onClose = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
             } else {
                 val otpViewModel: OTPLoginViewModel = viewModel {
                     OTPLoginViewModel(
@@ -558,8 +568,6 @@ fun AppNavHost(
         /////////////////////////////////////////////////////////
 
         composable(AppRoutes.CUSTOMER) {
-            val context = LocalContext.current
-
             val canteenViewModel: CanteenViewModel = viewModel()
 
             CanteenRoute(
@@ -738,19 +746,27 @@ fun AppNavHost(
 
             val cartState by cartViewModel.uiState.collectAsStateWithLifecycle()
 
-            val item = menuViewModel.uiState.value.storeItems
-                .firstOrNull {
-                    it.id == itemId
-                }
+            val menuState by menuViewModel.uiState.collectAsStateWithLifecycle()
+
+            val item = menuState.storeItems.firstOrNull {
+                it.id == itemId
+            }
 
             if (item == null) {
-                PlaceholderScreen(
-                    title = "Item unavailable",
-                    message = "Return to the menu and select another item.",
-                    onBack = {
-                        navController.popBackStack()
-                    }
-                )
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    AppNoticeDialog(
+                        title = "Item unavailable",
+                        message = "This item is no longer available. " +
+                                "Please return to the menu and select another item.",
+                        confirmText = "Back to menu",
+                        onClose = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
             } else {
                 val quantityAlreadyInCart = cartState.items
                     .filter {
@@ -934,20 +950,29 @@ fun AppNavHost(
                 viewModelStoreOwner = customerEntry
             )
 
-            val order = ordersViewModel.uiState.value.orders
-                .firstOrNull {
-                    it.id == orderId
-                }
+            val ordersState by ordersViewModel.uiState.collectAsStateWithLifecycle()
+
+            val order = ordersState.orders.firstOrNull {
+                it.id == orderId
+            }
 
             if (order == null) {
-                PlaceholderScreen(
-                    title = "Receipt unavailable",
-                    message = "This demo receipt is no longer available. " +
-                            "Orders are stored in memory only.",
-                    onBack = {
-                        navigateToCustomerOrders()
-                    }
-                )
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    AppNoticeDialog(
+                        title = "Receipt unavailable",
+                        message = "This receipt could not be found. " +
+                                "Demo orders are stored in memory only and " +
+                                "may no longer be available after the app restarts. " +
+                                "You can return to Orders to check the current list.",
+                        confirmText = "View orders",
+                        onClose = {
+                            navigateToCustomerOrders()
+                        }
+                    )
+                }
             } else {
                 val paymentSuccessViewModel: PaymentSuccessViewModel = viewModel {
                     PaymentSuccessViewModel(
@@ -981,8 +1006,8 @@ fun AppNavHost(
                     null
                 }
             }
-        ) {
-            val customerEntry = remember(navController) {
+        ) { backStackEntry ->
+            val customerEntry = remember(backStackEntry) {
                 navController.getBackStackEntry(
                     AppRoutes.CUSTOMER
                 )
@@ -1062,8 +1087,6 @@ fun AppNavHost(
         composable(
             route = AppRoutes.CUSTOMER_PROFILE
         ) {
-            val context = LocalContext.current
-
             val customerProfileViewModel: CustomerProfileViewModel = viewModel()
 
             CustomerProfileRoute(
@@ -1346,14 +1369,109 @@ fun AppNavHost(
         // Items side
         composable(
             route = AppRoutes.WORKER_ITEMS
-        ) {
-            PlaceholderScreen(
-                title = "Items",
-                message = "The Worker Items screen will be added here.",
-                onBack = {
-                    navController.popBackStack(
-                        route = AppRoutes.WORKER,
-                        inclusive = false
+        ) { backStackEntry ->
+            val workerEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(
+                    AppRoutes.WORKER
+                )
+            }
+
+            val workerPendingOrderViewModel:
+                    WorkerPendingOrderViewModel = viewModel(
+                viewModelStoreOwner = workerEntry
+            )
+
+            val workerItemViewModel: WorkerItemViewModel = viewModel(
+                viewModelStoreOwner = workerEntry
+            ) {
+                WorkerItemViewModel(
+                    sharedState = workerPendingOrderViewModel.uiState
+                )
+            }
+
+            WorkerItemRoute(
+                viewModel = workerItemViewModel,
+                onNavigateToOrders = {
+                    navigateToWorkerDestination(
+                        AppRoutes.WORKER
+                    )
+                },
+                onNavigateToCompletedOrders = {
+                    navigateToWorkerDestination(
+                        AppRoutes.WORKER_COMPLETED_ORDERS
+                    )
+                },
+                onNavigateToEditItem = { itemId ->
+                    navController.navigate(
+                        AppRoutes.workerEditItemRoute(
+                            itemId = itemId
+                        )
+                    ) {
+                        launchSingleTop = true
+                    }
+                },
+                onLogoutRequested = {
+                    logoutUser()
+                }
+            )
+        }
+
+        composable(
+            route = AppRoutes.WORKER_EDIT_ITEM,
+            arguments = listOf(
+                navArgument("itemId") {
+                    type = NavType.IntType
+                }
+            )
+        ) { backStackEntry ->
+            val itemId = requireNotNull(
+                backStackEntry.arguments
+            ).getInt("itemId")
+
+            val workerEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(
+                    AppRoutes.WORKER
+                )
+            }
+
+            val workerPendingOrderViewModel:
+                    WorkerPendingOrderViewModel = viewModel(
+                viewModelStoreOwner = workerEntry
+            )
+
+            val workerItemViewModel: WorkerItemViewModel = viewModel(
+                viewModelStoreOwner = workerEntry
+            ) {
+                WorkerItemViewModel(
+                    sharedState = workerPendingOrderViewModel.uiState
+                )
+            }
+
+            val workerItemEditViewModel:
+                    WorkerItemEditViewModel = viewModel {
+                val sharedState =
+                    workerPendingOrderViewModel.uiState.value
+
+                WorkerItemEditViewModel(
+                    itemId = itemId,
+                    initialItem = workerItemViewModel.findItem(
+                        itemId = itemId
+                    ),
+                    storeName = sharedState.storeName,
+                    canteenName = sharedState.canteenName
+                )
+            }
+
+            WorkerItemEditRoute(
+                viewModel = workerItemEditViewModel,
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onSaveChanges = { values ->
+                    workerItemViewModel.updateItem(
+                        itemId = values.itemId,
+                        priceInSen = values.priceInSen,
+                        availableQuantity = values.availableQuantity
                     )
                 }
             )
@@ -1745,44 +1863,5 @@ private fun customerCartViewModel(
             canteenName = arguments.getString("canteenName")
                 .orEmpty()
         )
-    }
-}
-
-// Delete when the screens are implemented
-@Composable
-private fun PlaceholderScreen(
-    title: String,
-    message: String,
-    onBack: () -> Unit
-) {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .safeDrawingPadding()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(
-                space = 16.dp,
-                alignment = Alignment.CenterVertically
-            )
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.headlineSmall
-            )
-
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyMedium
-            )
-
-            Button(onClick = onBack) {
-                Text("Back")
-            }
-        }
     }
 }
