@@ -133,10 +133,8 @@ class OrdersViewModel : ViewModel() {
                 .toString()
                 .padStart(3, '0'),
             placedAtMillis = System.currentTimeMillis(),
-            status = OrderStatus.PREPARING,
+            status = OrderStatus.ORDERED,
             items = request.items.map { cartItem ->
-                // Keep the existing Orders line model.
-                // Include the drink choice in its remarks summary.
                 val remarksSummary = listOfNotNull(
                     cartItem.drinkOption?.let {
                         "Drink: ${it.displayName}"

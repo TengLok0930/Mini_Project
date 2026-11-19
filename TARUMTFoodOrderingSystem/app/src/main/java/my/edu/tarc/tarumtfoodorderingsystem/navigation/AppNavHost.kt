@@ -95,6 +95,15 @@ import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.profile.Custom
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.profile.CustomerProfileViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.profile.voucher.VoucherRoute
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.profile.voucher.VoucherViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.completedOrders.WorkerCompletedOrderRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.completedOrders.WorkerCompletedOrderViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.orders.WorkerOrderRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.orders.WorkerOrderViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.orders.pendingOrders.WorkerPendingOrderAction
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.orders.pendingOrders.WorkerPendingOrderRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.orders.pendingOrders.WorkerPendingOrderViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.orders.pickupOrders.WorkerPickupOrderRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.orders.pickupOrders.WorkerPickupOrderViewModel
 
 object AppRoutes {
 
@@ -170,6 +179,14 @@ object AppRoutes {
 
     // Worker
     const val WORKER = "worker"
+    const val WORKER_ACTIVE_ORDERS = "worker_active_orders"
+    const val WORKER_PICKUPS = "worker_pickups"
+
+    // Completed Order side
+    const val WORKER_COMPLETED_ORDERS = "worker_completed_orders"
+
+    // Items side
+    const val WORKER_ITEMS = "worker_items"
 
     // Admin
     const val ADMIN = "admin"
@@ -217,6 +234,7 @@ fun AppNavHost(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
+    // Navigation helpers
     fun navigateAfterLogin(role: TestLoginRole) {
         scope.launch {
             try {
@@ -262,6 +280,25 @@ fun AppNavHost(
             }
 
             launchSingleTop = true
+        }
+    }
+
+    fun navigateToWorkerDestination(
+        route: String
+    ) {
+        if (route == AppRoutes.WORKER) {
+            navController.popBackStack(
+                route = AppRoutes.WORKER,
+                inclusive = false
+            )
+        } else {
+            navController.navigate(route) {
+                popUpTo(AppRoutes.WORKER) {
+                    inclusive = false
+                }
+
+                launchSingleTop = true
+            }
         }
     }
 
@@ -977,7 +1014,23 @@ fun AppNavHost(
             )
         }
 
-        composable(route = AppRoutes.CUSTOMER_PURCHASE_HISTORY) {
+        composable(
+            route = AppRoutes.CUSTOMER_PURCHASE_HISTORY,
+            exitTransition = {
+                if (targetState.destination.route == AppRoutes.CUSTOMER_ORDERS) {
+                    ExitTransition.None
+                } else {
+                    null
+                }
+            },
+            popEnterTransition = {
+                if (initialState.destination.route == AppRoutes.CUSTOMER_ORDERS) {
+                    EnterTransition.None
+                } else {
+                    null
+                }
+            }
+        ) {
             val purchaseHistoryViewModel: PurchaseHistoryViewModel = viewModel()
 
             PurchaseHistoryRoute(
@@ -1074,12 +1127,234 @@ fun AppNavHost(
         /////////////////// WORKER SCREEN ///////////////////////
         /////////////////////////////////////////////////////////
 
-        composable(AppRoutes.WORKER) {
+        // Order side
+        composable(
+            route = AppRoutes.WORKER,
+            enterTransition = {
+                EnterTransition.None
+            },
+            exitTransition = {
+                ExitTransition.None
+            },
+            popEnterTransition = {
+                EnterTransition.None
+            },
+            popExitTransition = {
+                ExitTransition.None
+            }
+        ) {
+            val workerPendingOrderViewModel:
+                    WorkerPendingOrderViewModel = viewModel()
+
+            WorkerPendingOrderRoute(
+                viewModel = workerPendingOrderViewModel,
+                onNavigateToCompletedOrders = {
+                    navigateToWorkerDestination(
+                        AppRoutes.WORKER_COMPLETED_ORDERS
+                    )
+                },
+                onNavigateToItems = {
+                    navigateToWorkerDestination(
+                        AppRoutes.WORKER_ITEMS
+                    )
+                },
+                onNavigateToActiveOrders = {
+                    navigateToWorkerDestination(
+                        AppRoutes.WORKER_ACTIVE_ORDERS
+                    )
+                },
+                onNavigateToPickups = {
+                    navigateToWorkerDestination(
+                        AppRoutes.WORKER_PICKUPS
+                    )
+                },
+                onLogoutRequested = {
+                    logoutUser()
+                }
+            )
+        }
+
+        composable(
+            route = AppRoutes.WORKER_ACTIVE_ORDERS,
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
+            popExitTransition = { ExitTransition.None }
+        ) { backStackEntry ->
+            val workerEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(
+                    AppRoutes.WORKER
+                )
+            }
+
+            val workerPendingOrderViewModel:
+                    WorkerPendingOrderViewModel = viewModel(
+                viewModelStoreOwner = workerEntry
+            )
+
+            val workerOrderViewModel: WorkerOrderViewModel = viewModel {
+                WorkerOrderViewModel(
+                    sharedState = workerPendingOrderViewModel.uiState
+                )
+            }
+
+            WorkerOrderRoute(
+                viewModel = workerOrderViewModel,
+                onNavigateToPendingOrders = {
+                    navigateToWorkerDestination(
+                        AppRoutes.WORKER
+                    )
+                },
+                onNavigateToPickups = {
+                    navigateToWorkerDestination(
+                        AppRoutes.WORKER_PICKUPS
+                    )
+                },
+                onNavigateToCompletedOrders = {
+                    navigateToWorkerDestination(
+                        AppRoutes.WORKER_COMPLETED_ORDERS
+                    )
+                },
+                onNavigateToItems = {
+                    navigateToWorkerDestination(
+                        AppRoutes.WORKER_ITEMS
+                    )
+                },
+                onAcceptingOrdersChanged = { accepting ->
+                    workerPendingOrderViewModel.onAction(
+                        WorkerPendingOrderAction.AcceptingOrdersChanged(
+                            accepting = accepting
+                        )
+                    )
+                },
+                onMarkReadyForPickup = { orderId ->
+                    workerPendingOrderViewModel.markOrderReady(
+                        orderId = orderId
+                    )
+                },
+                onLogoutRequested = {
+                    logoutUser()
+                }
+            )
+        }
+
+        composable(
+            route = AppRoutes.WORKER_PICKUPS,
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
+            popExitTransition = { ExitTransition.None }
+        ) { backStackEntry ->
+            val workerEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(
+                    AppRoutes.WORKER
+                )
+            }
+
+            val workerPendingOrderViewModel:
+                    WorkerPendingOrderViewModel = viewModel(
+                viewModelStoreOwner = workerEntry
+            )
+
+            val workerPickupOrderViewModel:
+                    WorkerPickupOrderViewModel = viewModel {
+                WorkerPickupOrderViewModel(
+                    sharedState = workerPendingOrderViewModel.uiState
+                )
+            }
+
+            WorkerPickupOrderRoute(
+                viewModel = workerPickupOrderViewModel,
+                onNavigateToPendingOrders = {
+                    navigateToWorkerDestination(
+                        AppRoutes.WORKER
+                    )
+                },
+                onNavigateToActiveOrders = {
+                    navigateToWorkerDestination(
+                        AppRoutes.WORKER_ACTIVE_ORDERS
+                    )
+                },
+                onNavigateToCompletedOrders = {
+                    navigateToWorkerDestination(
+                        AppRoutes.WORKER_COMPLETED_ORDERS
+                    )
+                },
+                onNavigateToItems = {
+                    navigateToWorkerDestination(
+                        AppRoutes.WORKER_ITEMS
+                    )
+                },
+                onAcceptingOrdersChanged = { accepting ->
+                    workerPendingOrderViewModel.onAction(
+                        WorkerPendingOrderAction.AcceptingOrdersChanged(
+                            accepting = accepting
+                        )
+                    )
+                },
+                onConfirmCollection = { orderId ->
+                    workerPendingOrderViewModel.confirmOrderCollection(
+                        orderId = orderId
+                    )
+                },
+                onLogoutRequested = {
+                    logoutUser()
+                }
+            )
+        }
+
+        // Completed order side
+        composable(
+            route = AppRoutes.WORKER_COMPLETED_ORDERS
+        ) { backStackEntry ->
+            val workerEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(
+                    AppRoutes.WORKER
+                )
+            }
+
+            val workerPendingOrderViewModel:
+                    WorkerPendingOrderViewModel = viewModel(
+                viewModelStoreOwner = workerEntry
+            )
+
+            val workerCompletedOrderViewModel:
+                    WorkerCompletedOrderViewModel = viewModel {
+                WorkerCompletedOrderViewModel(
+                    sharedState = workerPendingOrderViewModel.uiState
+                )
+            }
+
+            WorkerCompletedOrderRoute(
+                viewModel = workerCompletedOrderViewModel,
+                onNavigateToOrders = {
+                    navigateToWorkerDestination(
+                        AppRoutes.WORKER
+                    )
+                },
+                onNavigateToItems = {
+                    navigateToWorkerDestination(
+                        AppRoutes.WORKER_ITEMS
+                    )
+                },
+                onLogoutRequested = {
+                    logoutUser()
+                }
+            )
+        }
+
+        // Items side
+        composable(
+            route = AppRoutes.WORKER_ITEMS
+        ) {
             PlaceholderScreen(
-                title = "Worker",
-                message = "Worker screen will be added here.",
+                title = "Items",
+                message = "The Worker Items screen will be added here.",
                 onBack = {
-                    navController.popBackStack()
+                    navController.popBackStack(
+                        route = AppRoutes.WORKER,
+                        inclusive = false
+                    )
                 }
             )
         }
