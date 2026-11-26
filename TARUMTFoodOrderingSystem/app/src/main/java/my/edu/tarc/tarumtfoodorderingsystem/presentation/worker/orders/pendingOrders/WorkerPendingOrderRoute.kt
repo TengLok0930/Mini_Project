@@ -12,7 +12,7 @@ fun WorkerPendingOrderRoute(
     onNavigateToItems: () -> Unit,
     onNavigateToActiveOrders: () -> Unit,
     onNavigateToPickups: () -> Unit,
-    onLogoutRequested: () -> Unit,
+    onNavigateToWorkerProfile: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -38,12 +38,8 @@ fun WorkerPendingOrderRoute(
                     onNavigateToPickups()
                 }
 
-                WorkerPendingOrderAction.ConfirmLogoutClicked -> {
-                    viewModel.onAction(
-                        WorkerPendingOrderAction.DismissLogoutClicked
-                    )
-
-                    onLogoutRequested()
+                WorkerPendingOrderAction.ProfileClicked -> {
+                    onNavigateToWorkerProfile()
                 }
 
                 else -> {

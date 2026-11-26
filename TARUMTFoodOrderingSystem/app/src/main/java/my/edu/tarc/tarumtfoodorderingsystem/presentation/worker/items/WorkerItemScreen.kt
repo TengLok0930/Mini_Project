@@ -39,9 +39,9 @@ fun WorkerItemScreen(
                 AppTopBar(
                     title = "Items",
                     subtitle = uiState.storeSubtitle,
-                    onLogoutClick = {
+                    onProfileClick = {
                         onAction(
-                            WorkerItemAction.LogoutClicked
+                            WorkerItemAction.ProfileClicked
                         )
                     }
                 )
@@ -93,7 +93,7 @@ fun WorkerItemScreen(
                     contentType = "heading"
                 ) {
                     Text(
-                        text = "Manage your menu",
+                        text = "Manage your items",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = colors.secondary,
@@ -134,12 +134,6 @@ fun WorkerItemScreen(
                 }
             }
         }
-    }
-
-    if (uiState.showLogoutDialog) {
-        WorkerItemLogoutDialog(
-            onAction = onAction
-        )
     }
 }
 
@@ -302,49 +296,6 @@ private fun WorkerItemEmptyCard() {
             )
         }
     }
-}
-
-@Composable
-private fun WorkerItemLogoutDialog(
-    onAction: (WorkerItemAction) -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = {
-            onAction(
-                WorkerItemAction.DismissLogoutClicked
-            )
-        },
-        title = {
-            Text("Log out?")
-        },
-        text = {
-            Text(
-                text = "You will return to the login screen."
-            )
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    onAction(
-                        WorkerItemAction.ConfirmLogoutClicked
-                    )
-                }
-            ) {
-                Text("Log out")
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = {
-                    onAction(
-                        WorkerItemAction.DismissLogoutClicked
-                    )
-                }
-            ) {
-                Text("Stay")
-            }
-        }
-    )
 }
 
 private fun formatWorkerItemPrice(

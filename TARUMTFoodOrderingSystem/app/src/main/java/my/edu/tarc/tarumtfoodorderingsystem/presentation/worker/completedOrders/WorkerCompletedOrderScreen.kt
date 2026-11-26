@@ -6,7 +6,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -15,7 +14,6 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,9 +57,9 @@ fun WorkerCompletedOrderScreen(
                 AppTopBar(
                     title = "Completed Orders",
                     subtitle = uiState.storeSubtitle,
-                    onLogoutClick = {
+                    onProfileClick = {
                         onAction(
-                            WorkerCompletedOrderAction.LogoutClicked
+                            WorkerCompletedOrderAction.ProfileClicked
                         )
                     }
                 )
@@ -164,12 +162,6 @@ fun WorkerCompletedOrderScreen(
                 }
             }
         }
-    }
-
-    if (uiState.showLogoutDialog) {
-        WorkerCompletedLogoutDialog(
-            onAction = onAction
-        )
     }
 }
 
@@ -380,49 +372,6 @@ private fun WorkerCompletedOrderCard(
             )
         }
     }
-}
-
-@Composable
-private fun WorkerCompletedLogoutDialog(
-    onAction: (WorkerCompletedOrderAction) -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = {
-            onAction(
-                WorkerCompletedOrderAction.DismissLogoutClicked
-            )
-        },
-        title = {
-            Text("Log out?")
-        },
-        text = {
-            Text(
-                text = "You will return to the login screen."
-            )
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    onAction(
-                        WorkerCompletedOrderAction.ConfirmLogoutClicked
-                    )
-                }
-            ) {
-                Text("Log out")
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = {
-                    onAction(
-                        WorkerCompletedOrderAction.DismissLogoutClicked
-                    )
-                }
-            ) {
-                Text("Stay")
-            }
-        }
-    )
 }
 
 private fun formatWorkerCompletedAmount(

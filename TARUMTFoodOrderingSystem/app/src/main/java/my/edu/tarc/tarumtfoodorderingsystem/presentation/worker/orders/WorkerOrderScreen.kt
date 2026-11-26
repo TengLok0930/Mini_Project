@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.orders.pendingOrders.WorkerOrder
 import java.math.BigDecimal
@@ -47,9 +48,9 @@ fun WorkerOrderScreen(
                 AppTopBar(
                     title = "Orders",
                     subtitle = uiState.storeSubtitle,
-                    onLogoutClick = {
+                    onProfileClick = {
                         onAction(
-                            WorkerOrderAction.LogoutClicked
+                            WorkerOrderAction.ProfileClicked
                         )
                     }
                 )
@@ -200,12 +201,6 @@ fun WorkerOrderScreen(
             }
         }
     }
-
-    if (uiState.showLogoutDialog) {
-        WorkerOrderLogoutDialog(
-            onAction = onAction
-        )
-    }
 }
 
 @Composable
@@ -334,17 +329,31 @@ private fun WorkerActiveOrderCard(
                 }
             }
 
-            Text(
-                text = formatWorkerActiveAmount(
-                    order.totalInSen
-                ) + " · Order #${order.id}",
-                style = MaterialTheme.typography.bodySmall,
-                color = colors.onSurfaceVariant,
-                modifier = Modifier.padding(
-                    top = 8.dp
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.Bottom
+            ) {
+                Text(
+                    text = formatWorkerActiveAmount(
+                        order.totalInSen
+                    ) + " · Order #${order.id}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.onSurfaceVariant,
+                    modifier = Modifier.weight(1f)
                 )
-            )
 
+                if (!expanded) {
+                    Text(
+                        text = "Press to expand",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colors.onSurfaceVariant,
+                        textAlign = TextAlign.End
+                    )
+                }
+            }
             if (expanded) {
                 AppActionButton(
                     title = "Mark ready for pickup",
@@ -353,49 +362,6 @@ private fun WorkerActiveOrderCard(
             }
         }
     }
-}
-
-@Composable
-private fun WorkerOrderLogoutDialog(
-    onAction: (WorkerOrderAction) -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = {
-            onAction(
-                WorkerOrderAction.DismissLogoutClicked
-            )
-        },
-        title = {
-            Text("Log out?")
-        },
-        text = {
-            Text(
-                text = "You will return to the login screen."
-            )
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    onAction(
-                        WorkerOrderAction.ConfirmLogoutClicked
-                    )
-                }
-            ) {
-                Text("Log out")
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = {
-                    onAction(
-                        WorkerOrderAction.DismissLogoutClicked
-                    )
-                }
-            ) {
-                Text("Stay")
-            }
-        }
-    )
 }
 
 private fun formatWorkerActiveAmount(

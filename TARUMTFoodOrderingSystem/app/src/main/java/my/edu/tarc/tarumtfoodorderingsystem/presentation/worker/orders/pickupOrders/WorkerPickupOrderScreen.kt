@@ -5,6 +5,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -17,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import java.math.BigDecimal
 import java.util.Locale
@@ -45,9 +48,9 @@ fun WorkerPickupOrderScreen(
                 AppTopBar(
                     title = "Orders",
                     subtitle = uiState.storeSubtitle,
-                    onLogoutClick = {
+                    onProfileClick = {
                         onAction(
-                            WorkerPickupOrderAction.LogoutClicked
+                            WorkerPickupOrderAction.ProfileClicked
                         )
                     }
                 )
@@ -211,6 +214,14 @@ fun WorkerPickupOrderScreen(
                 ) { order ->
                     WorkerPickupOrderCard(
                         order = order,
+                        expanded = uiState.expandedOrderId == order.id,
+                        onClick = {
+                            onAction(
+                                WorkerPickupOrderAction.OrderClicked(
+                                    orderId = order.id
+                                )
+                            )
+                        },
                         onConfirmCollection = {
                             onAction(
                                 WorkerPickupOrderAction
@@ -223,12 +234,6 @@ fun WorkerPickupOrderScreen(
                 }
             }
         }
-    }
-
-    if (uiState.showLogoutDialog) {
-        WorkerPickupLogoutDialog(
-            onAction = onAction
-        )
     }
 }
 
@@ -264,6 +269,8 @@ private fun WorkerPickupEmptyCard() {
 @Composable
 private fun WorkerPickupOrderCard(
     order: WorkerOrder,
+    expanded: Boolean,
+    onClick: () -> Unit,
     onConfirmCollection: () -> Unit
 ) {
     val colors = MaterialTheme.colorScheme
@@ -281,10 +288,14 @@ private fun WorkerPickupOrderCard(
         Color(0xFF205332)
     }
 
-    Surface(
+    Card(
+        onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        color = colors.surfaceVariant
+        colors = CardDefaults.cardColors(
+            containerColor = colors.surfaceVariant,
+            contentColor = colors.onSurface
+        )
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -352,21 +363,38 @@ private fun WorkerPickupOrderCard(
                 }
             }
 
-            Text(
-                text = formatWorkerPickupAmount(
-                    order.totalInSen
-                ) + " · Order #${order.id}",
-                style = MaterialTheme.typography.bodySmall,
-                color = colors.onSurfaceVariant,
-                modifier = Modifier.padding(
-                    top = 8.dp
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.Bottom
+            ) {
+                Text(
+                    text = formatWorkerPickupAmount(
+                        order.totalInSen
+                    ) + " · Order #${order.id}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.onSurfaceVariant,
+                    modifier = Modifier.weight(1f)
                 )
-            )
 
-            AppActionButton(
-                title = "Confirm Collection",
-                onClick = onConfirmCollection
-            )
+                if (!expanded) {
+                    Text(
+                        text = "Press to expand",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colors.onSurfaceVariant,
+                        textAlign = TextAlign.End
+                    )
+                }
+            }
+
+            if (expanded) {
+                AppActionButton(
+                    title = "Confirm Collection",
+                    onClick = onConfirmCollection
+                )
+            }
         }
     }
 }
@@ -423,49 +451,6 @@ private fun WorkerCollectionSuccessCard(
             )
         }
     }
-}
-
-@Composable
-private fun WorkerPickupLogoutDialog(
-    onAction: (WorkerPickupOrderAction) -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = {
-            onAction(
-                WorkerPickupOrderAction.DismissLogoutClicked
-            )
-        },
-        title = {
-            Text("Log out?")
-        },
-        text = {
-            Text(
-                text = "You will return to the login screen."
-            )
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    onAction(
-                        WorkerPickupOrderAction.ConfirmLogoutClicked
-                    )
-                }
-            ) {
-                Text("Log out")
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = {
-                    onAction(
-                        WorkerPickupOrderAction.DismissLogoutClicked
-                    )
-                }
-            ) {
-                Text("Stay")
-            }
-        }
-    )
 }
 
 private fun formatWorkerPickupAmount(

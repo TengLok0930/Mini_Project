@@ -10,9 +10,5 @@ sealed interface WorkerCompletedOrderAction {
 
     data object ItemsClicked : WorkerCompletedOrderAction
 
-    data object LogoutClicked : WorkerCompletedOrderAction
-
-    data object ConfirmLogoutClicked : WorkerCompletedOrderAction
-
-    data object DismissLogoutClicked : WorkerCompletedOrderAction
+    data object ProfileClicked : WorkerCompletedOrderAction
 }

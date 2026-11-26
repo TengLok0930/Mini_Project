@@ -327,6 +327,16 @@ private fun CustomerOrderCard(
                     color = mainTextColor
                 )
 
+                item.drinkOption?.let { drink ->
+                    Spacer(Modifier.height(3.dp))
+
+                    Text(
+                        text = "Drink: $drink",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = secondaryTextColor
+                    )
+                }
+
                 item.remarks
                     ?.trim()
                     ?.takeIf { it.isNotBlank() }

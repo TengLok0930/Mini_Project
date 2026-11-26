@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -147,7 +148,7 @@ fun OrderItemScreen(
 
                         Text(
                             text = formatOrderItemAmount(
-                                uiState.item.priceInSen
+                                uiState.unitPriceInSen
                             ) + " each",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
@@ -232,7 +233,7 @@ fun OrderItemScreen(
 
                         Text(
                             text = if (uiState.maximumQuantity > 0) {
-                                "Max. ${uiState.maximumQuantity} per item line"
+                                "Max. ${uiState.maximumQuantity} quantity"
                             } else {
                                 "No more available to add"
                             },
@@ -270,15 +271,12 @@ fun OrderItemScreen(
                                         .fillMaxWidth()
                                         .heightIn(min = 48.dp)
                                         .selectable(
-                                            selected =
-                                                uiState.selectedDrinkOption ==
-                                                        option,
+                                            selected = uiState.selectedDrinkOption == option,
                                             onClick = {
                                                 onAction(
-                                                    OrderItemAction
-                                                        .DrinkOptionSelected(
-                                                            option = option
-                                                        )
+                                                    OrderItemAction.DrinkOptionSelected(
+                                                        option = option
+                                                    )
                                                 )
                                             },
                                             role = Role.RadioButton
@@ -290,8 +288,7 @@ fun OrderItemScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     RadioButton(
-                                        selected =
-                                            uiState.selectedDrinkOption == option,
+                                        selected = uiState.selectedDrinkOption == option,
                                         onClick = null
                                     )
 
@@ -299,12 +296,70 @@ fun OrderItemScreen(
                                         text = option.displayName,
                                         style = MaterialTheme.typography.bodyLarge,
                                         color = colors.onSurface,
-                                        modifier = Modifier.padding(
-                                            start = 8.dp
-                                        )
+                                        modifier = Modifier
+                                            .padding(start = 8.dp)
+                                            .weight(1f)
                                     )
+
+                                    if (option.surchargeInSen > 0L) {
+                                        Text(
+                                            text = "+ " + formatOrderItemAmount(
+                                                option.surchargeInSen
+                                            ),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = colors.onSurfaceVariant
+                                        )
+                                    }
                                 }
                             }
+                        }
+
+                        HorizontalDivider(
+                            color = colors.outlineVariant
+                        )
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 48.dp)
+                                .toggleable(
+                                    value = uiState.takeaway,
+                                    onValueChange = { checked ->
+                                        onAction(
+                                            OrderItemAction.TakeawayChanged(
+                                                takeaway = checked
+                                            )
+                                        )
+                                    },
+                                    role = Role.Checkbox
+                                )
+                                .padding(
+                                    horizontal = 4.dp,
+                                    vertical = 4.dp
+                                ),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = uiState.takeaway,
+                                onCheckedChange = null
+                            )
+
+                            Text(
+                                text = "Takeaway",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = colors.onSurface,
+                                modifier = Modifier
+                                    .padding(start = 8.dp)
+                                    .weight(1f)
+                            )
+
+                            Text(
+                                text = "+ " + formatOrderItemAmount(
+                                    TAKEAWAY_SURCHARGE_IN_SEN
+                                ),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = colors.onSurfaceVariant
+                            )
                         }
                     }
                 }

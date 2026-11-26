@@ -18,9 +18,9 @@ sealed interface WorkerPickupOrderAction {
         val orderId: Int
     ) : WorkerPickupOrderAction
 
-    data object LogoutClicked : WorkerPickupOrderAction
+    data class OrderClicked(
+        val orderId: Int
+    ) : WorkerPickupOrderAction
 
-    data object ConfirmLogoutClicked : WorkerPickupOrderAction
-
-    data object DismissLogoutClicked : WorkerPickupOrderAction
+    data object ProfileClicked : WorkerPickupOrderAction
 }

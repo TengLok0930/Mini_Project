@@ -76,25 +76,9 @@ class WorkerItemViewModel(
         action: WorkerItemAction
     ) {
         when (action) {
-            WorkerItemAction.LogoutClicked -> {
-                localState.update {
-                    it.copy(
-                        showLogoutDialog = true
-                    )
-                }
-            }
-
-            WorkerItemAction.DismissLogoutClicked -> {
-                localState.update {
-                    it.copy(
-                        showLogoutDialog = false
-                    )
-                }
-            }
-
             WorkerItemAction.OrdersClicked,
             WorkerItemAction.CompletedOrdersClicked,
-            WorkerItemAction.ConfirmLogoutClicked,
+            WorkerItemAction.ProfileClicked,
             is WorkerItemAction.EditItemClicked -> {
                 // Navigation is handled by WorkerItemRoute.
             }

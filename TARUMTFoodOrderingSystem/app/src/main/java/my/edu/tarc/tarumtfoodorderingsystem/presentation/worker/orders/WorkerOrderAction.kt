@@ -22,9 +22,5 @@ sealed interface WorkerOrderAction {
         val orderId: Int
     ) : WorkerOrderAction
 
-    data object LogoutClicked : WorkerOrderAction
-
-    data object ConfirmLogoutClicked : WorkerOrderAction
-
-    data object DismissLogoutClicked : WorkerOrderAction
+    data object ProfileClicked : WorkerOrderAction
 }

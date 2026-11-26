@@ -10,9 +10,5 @@ sealed interface WorkerItemAction {
         val itemId: Int
     ) : WorkerItemAction
 
-    data object LogoutClicked : WorkerItemAction
-
-    data object ConfirmLogoutClicked : WorkerItemAction
-
-    data object DismissLogoutClicked : WorkerItemAction
+    data object ProfileClicked : WorkerItemAction
 }

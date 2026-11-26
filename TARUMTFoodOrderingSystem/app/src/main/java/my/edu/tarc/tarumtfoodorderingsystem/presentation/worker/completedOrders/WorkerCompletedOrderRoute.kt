@@ -10,7 +10,7 @@ fun WorkerCompletedOrderRoute(
     viewModel: WorkerCompletedOrderViewModel,
     onNavigateToOrders: () -> Unit,
     onNavigateToItems: () -> Unit,
-    onLogoutRequested: () -> Unit,
+    onNavigateToWorkerProfile: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -28,12 +28,8 @@ fun WorkerCompletedOrderRoute(
                     onNavigateToItems()
                 }
 
-                WorkerCompletedOrderAction.ConfirmLogoutClicked -> {
-                    viewModel.onAction(
-                        WorkerCompletedOrderAction.DismissLogoutClicked
-                    )
-
-                    onLogoutRequested()
+                WorkerCompletedOrderAction.ProfileClicked -> {
+                    onNavigateToWorkerProfile()
                 }
 
                 else -> {

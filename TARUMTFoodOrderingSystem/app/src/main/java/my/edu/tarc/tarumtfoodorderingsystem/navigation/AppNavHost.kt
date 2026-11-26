@@ -47,8 +47,14 @@ import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.menuMaintenance.A
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.menuMaintenance.AdminMenuViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.menuMaintenance.addMenuItem.AdminAddItemRoute
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.menuMaintenance.addMenuItem.AdminAddItemViewModel
-import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.orderReporting.AdminReportRoute
-import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.orderReporting.AdminReportViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.salesReporting.AdminReportRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.salesReporting.AdminReportViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.salesReporting.editReport.AdminEditReportRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.salesReporting.editReport.AdminEditReportViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.salesReporting.reportDetails.AdminReportDetailRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.salesReporting.reportDetails.AdminReportDetailViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.salesReporting.saveReport.AdminSaveReportRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.salesReporting.saveReport.AdminSaveReportViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.storeMaintenance.AdminStoreRoute
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.storeMaintenance.AdminStoreViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.admin.storeMaintenance.addStore.AdminAddStoreRoute
@@ -103,6 +109,8 @@ import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.orders.pendingOr
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.orders.pendingOrders.WorkerPendingOrderViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.orders.pickupOrders.WorkerPickupOrderRoute
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.orders.pickupOrders.WorkerPickupOrderViewModel
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.profile.WorkerProfileRoute
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.worker.profile.WorkerProfileViewModel
 import my.edu.tarc.tarumtfoodorderingsystem.ui.components.AppNoticeDialog
 
 object AppRoutes {
@@ -194,6 +202,8 @@ object AppRoutes {
         return "worker_edit_item/$itemId"
     }
 
+    const val WORKER_PROFILE = "worker_profile"
+
     // Admin
     const val ADMIN = "admin"
     const val CANTEEN_MAINTENANCE = "canteen_maintenance"
@@ -222,7 +232,42 @@ object AppRoutes {
     fun createMenuItem(storeId: Int): String {
         return "create_menu_item/$storeId"
     }
-    const val ORDER_REPORTING = "order_reporting"
+
+    // Sales Reporting Side
+    const val SALES_REPORTING = "sales_reporting"
+
+    const val ADMIN_REPORT_DETAILS =
+        "admin_report_details/{storeId}/{startDateMillis}/{endDateMillis}"
+
+    fun adminReportDetails(
+        storeId: Int,
+        startDateMillis: Long,
+        endDateMillis: Long
+    ): String {
+        return "admin_report_details/$storeId/$startDateMillis/$endDateMillis"
+    }
+
+    const val ADMIN_SAVE_REPORT =
+        "admin_save_report/{storeId}/{startDateMillis}/{endDateMillis}"
+
+    fun adminSaveReport(
+        storeId: Int,
+        startDateMillis: Long,
+        endDateMillis: Long
+    ): String {
+        return "admin_save_report/$storeId/$startDateMillis/$endDateMillis"
+    }
+
+    const val ADMIN_EDIT_REPORT =
+        "admin_edit_report/{storeId}/{startDateMillis}/{endDateMillis}"
+
+    fun adminEditReport(
+        storeId: Int,
+        startDateMillis: Long,
+        endDateMillis: Long
+    ): String {
+        return "admin_edit_report/$storeId/$startDateMillis/$endDateMillis"
+    }
 }
 
 // When implementing backend remember to delete authRepository, registrationService (they are placeholders for front end)
@@ -313,6 +358,12 @@ fun AppNavHost(
 
                 launchSingleTop = true
             }
+        }
+    }
+
+    fun navigateToWorkerProfile() {
+        navController.navigate(AppRoutes.WORKER_PROFILE) {
+            launchSingleTop = true
         }
     }
 
@@ -1131,6 +1182,10 @@ fun AppNavHost(
                 },
                 onLogoutRequested = {
                     logoutUser()
+                },
+                onDeleteAccountRequested =  {
+                    // TODO: Once backend exists, delete account first then logout
+                    logoutUser()
                 }
             )
         }
@@ -1226,8 +1281,8 @@ fun AppNavHost(
                         AppRoutes.WORKER_PICKUPS
                     )
                 },
-                onLogoutRequested = {
-                    logoutUser()
+                onNavigateToWorkerProfile = {
+                    navigateToWorkerProfile()
                 }
             )
         }
@@ -1290,8 +1345,8 @@ fun AppNavHost(
                         orderId = orderId
                     )
                 },
-                onLogoutRequested = {
-                    logoutUser()
+                onNavigateToWorkerProfile = {
+                    navigateToWorkerProfile()
                 }
             )
         }
@@ -1355,8 +1410,8 @@ fun AppNavHost(
                         orderId = orderId
                     )
                 },
-                onLogoutRequested = {
-                    logoutUser()
+                onNavigateToWorkerProfile = {
+                    navigateToWorkerProfile()
                 }
             )
         }
@@ -1395,8 +1450,8 @@ fun AppNavHost(
                         AppRoutes.WORKER_ITEMS
                     )
                 },
-                onLogoutRequested = {
-                    logoutUser()
+                onNavigateToWorkerProfile = {
+                    navigateToWorkerProfile()
                 }
             )
         }
@@ -1445,8 +1500,8 @@ fun AppNavHost(
                         launchSingleTop = true
                     }
                 },
-                onLogoutRequested = {
-                    logoutUser()
+                onNavigateToWorkerProfile = {
+                    navigateToWorkerProfile()
                 }
             )
         }
@@ -1512,6 +1567,32 @@ fun AppNavHost(
             )
         }
 
+        composable(route = AppRoutes.WORKER_PROFILE) {
+            val workerEntry = remember(it) {
+                navController.getBackStackEntry(AppRoutes.WORKER)
+            }
+            val workerPendingOrderViewModel: WorkerPendingOrderViewModel =
+                viewModel(viewModelStoreOwner = workerEntry)
+
+            val workerProfileViewModel: WorkerProfileViewModel = viewModel {
+                WorkerProfileViewModel(
+                    sharedState = workerPendingOrderViewModel.uiState
+                )
+            }
+
+            WorkerProfileRoute(
+                viewModel = workerProfileViewModel,
+                isDarkTheme = isDarkTheme,
+                onDarkThemeChanged = onDarkThemeChanged,
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onLogoutRequested = {
+                    logoutUser()
+                }
+            )
+        }
+
         /////////////////////////////////////////////////////////
         //////////////////// ADMIN SCREEN ///////////////////////
         /////////////////////////////////////////////////////////
@@ -1540,8 +1621,8 @@ fun AppNavHost(
                     }
                 },
 
-                onNavigateToOrderReporting = {
-                    navController.navigate(AppRoutes.ORDER_REPORTING) {
+                onNavigateToSalesReporting = {
+                    navController.navigate(AppRoutes.SALES_REPORTING) {
                         launchSingleTop = true
                     }
                 },
@@ -1845,14 +1926,140 @@ fun AppNavHost(
             )
         }
 
-        // Order Reporting side
-        composable(AppRoutes.ORDER_REPORTING) {
+        // Sales Reporting side
+        composable(AppRoutes.SALES_REPORTING) {
             val adminReportViewModel: AdminReportViewModel = viewModel()
 
             AdminReportRoute(
                 viewModel = adminReportViewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToReportDetails = { storeId, start, end ->
+                    navController.navigate(
+                        AppRoutes.adminReportDetails(storeId, start, end)
+                    ) { launchSingleTop = true }
+                },
+                onNavigateToSaveReport = { storeId, start, end ->
+                    navController.navigate(
+                        AppRoutes.adminSaveReport(storeId, start, end)
+                    ) { launchSingleTop = true }
+                }
+            )
+        }
+
+        composable(
+            route = AppRoutes.ADMIN_SAVE_REPORT,
+            arguments = listOf(
+                navArgument("storeId") { type = NavType.IntType },
+                navArgument("startDateMillis") { type = NavType.LongType },
+                navArgument("endDateMillis") { type = NavType.LongType }
+            )
+        ) { backStackEntry ->
+            val context = LocalContext.current
+            val arguments = requireNotNull(backStackEntry.arguments)
+
+            val saveReportViewModel: AdminSaveReportViewModel = viewModel {
+                AdminSaveReportViewModel(
+                    storeId = arguments.getInt("storeId"),
+                    startDateMillis = arguments.getLong("startDateMillis"),
+                    endDateMillis = arguments.getLong("endDateMillis")
+                )
+            }
+
+            AdminSaveReportRoute(
+                viewModel = saveReportViewModel,
                 onNavigateBack = {
                     navController.popBackStack()
+                },
+                onReportSaved = { reportName ->
+                    Toast.makeText(
+                        context,
+                        "Saved \"$reportName\".",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(
+            route = AppRoutes.ADMIN_REPORT_DETAILS,
+            arguments = listOf(
+                navArgument("storeId") { type = NavType.IntType },
+                navArgument("startDateMillis") { type = NavType.LongType },
+                navArgument("endDateMillis") { type = NavType.LongType }
+            )
+        ) { backStackEntry ->
+            val arguments = requireNotNull(backStackEntry.arguments)
+
+            val reportDetailViewModel: AdminReportDetailViewModel = viewModel {
+                AdminReportDetailViewModel(
+                    storeId = arguments.getInt("storeId"),
+                    startDateMillis = arguments.getLong("startDateMillis"),
+                    endDateMillis = arguments.getLong("endDateMillis")
+                )
+            }
+
+            AdminReportDetailRoute(
+                viewModel = reportDetailViewModel,
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToEditReport = { storeId, start, end ->
+                    navController.navigate(
+                        AppRoutes.adminEditReport(storeId, start, end)
+                    ) {
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
+        composable(
+            route = AppRoutes.ADMIN_EDIT_REPORT,
+            arguments = listOf(
+                navArgument("storeId") { type = NavType.IntType },
+                navArgument("startDateMillis") { type = NavType.LongType },
+                navArgument("endDateMillis") { type = NavType.LongType }
+            )
+        ) { backStackEntry ->
+            val context = LocalContext.current
+            val arguments = requireNotNull(backStackEntry.arguments)
+
+            val editReportViewModel: AdminEditReportViewModel = viewModel {
+                AdminEditReportViewModel(
+                    storeId = arguments.getInt("storeId"),
+                    startDateMillis = arguments.getLong("startDateMillis"),
+                    endDateMillis = arguments.getLong("endDateMillis")
+                )
+            }
+
+            AdminEditReportRoute(
+                viewModel = editReportViewModel,
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onReportSaved = { reportName ->
+                    Toast.makeText(
+                        context,
+                        "Updated \"$reportName\".",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                    navController.popBackStack()
+                },
+                onReportDeleted = {
+                    Toast.makeText(
+                        context,
+                        "Report deleted.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                    // Skip Report Details and return to the Sales Reporting list.
+                    navController.popBackStack(
+                        route = AppRoutes.SALES_REPORTING,
+                        inclusive = false
+                    )
                 }
             )
         }

@@ -1,11 +1,13 @@
 package my.edu.tarc.tarumtfoodorderingsystem.ui.components
 
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -14,8 +16,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -29,6 +34,7 @@ fun AppTopBar(
     subtitle: String? = null,
     onBackClick: (() -> Unit)? = null,
     onLogoutClick: (() -> Unit)? = null,
+    onProfileClick: (() -> Unit)? = null,
     @DrawableRes backIconResId: Int =
         if (subtitle.isNullOrBlank()) {
             R.drawable.arrow_back_48px
@@ -86,6 +92,36 @@ fun AppTopBar(
             }
         },
         actions = {
+            if (onProfileClick != null) {
+                Column(
+                    modifier = Modifier
+                        .padding(end = 8.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable(
+                            onClickLabel = "Open profile",
+                            role = Role.Button,
+                            onClick = onProfileClick
+                        )
+                        .padding(
+                            horizontal = 12.dp,
+                            vertical = 4.dp
+                        ),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.profile_48px),
+                        contentDescription = null,
+                        modifier = Modifier.size(26.dp)
+                    )
+
+                    Text(
+                        text = "Profile",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
             if (onLogoutClick != null) {
                 IconButton(
                     onClick = onLogoutClick

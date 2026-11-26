@@ -11,7 +11,7 @@ fun AdminPanelRoute(
     onNavigateToCanteenMaintenance: () -> Unit,
     onNavigateToStoreMaintenance: () -> Unit,
     onNavigateToMenuMaintenance: () -> Unit,
-    onNavigateToOrderReporting: () -> Unit,
+    onNavigateToSalesReporting: () -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -34,8 +34,8 @@ fun AdminPanelRoute(
                     onNavigateToMenuMaintenance()
                 }
 
-                AdminPanelAction.OrderReportingClicked -> {
-                    onNavigateToOrderReporting()
+                AdminPanelAction.SalesReportingClicked -> {
+                    onNavigateToSalesReporting()
                 }
 
                 AdminPanelAction.LogoutConfirmed -> {

@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import java.math.BigDecimal
 import java.util.Locale
@@ -44,9 +45,9 @@ fun WorkerPendingOrderScreen(
                 AppTopBar(
                     title = "Orders",
                     subtitle = uiState.storeSubtitle,
-                    onLogoutClick = {
+                    onProfileClick = {
                         onAction(
-                            WorkerPendingOrderAction.LogoutClicked
+                            WorkerPendingOrderAction.ProfileClicked
                         )
                     }
                 )
@@ -160,19 +161,6 @@ fun WorkerPendingOrderScreen(
                     }
                 }
 
-                uiState.notice?.let { notice ->
-                    item(
-                        key = "order_notice",
-                        contentType = "message"
-                    ) {
-                        Text(
-                            text = notice,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = colors.onSurfaceVariant
-                        )
-                    }
-                }
-
                 if (pendingOrders.isEmpty()) {
                     item(
                         key = "pending_empty",
@@ -219,12 +207,6 @@ fun WorkerPendingOrderScreen(
     uiState.managingOrder?.let { order ->
         WorkerPendingDecisionDialog(
             order = order,
-            onAction = onAction
-        )
-    }
-
-    if (uiState.showLogoutDialog) {
-        WorkerPendingLogoutDialog(
             onAction = onAction
         )
     }
@@ -349,16 +331,31 @@ private fun WorkerPendingOrderCard(
                 }
             }
 
-            Text(
-                text = formatWorkerPendingAmount(
-                    order.totalInSen
-                ) + " · Order #${order.id}",
-                style = MaterialTheme.typography.bodySmall,
-                color = colors.onSurfaceVariant,
-                modifier = Modifier.padding(
-                    top = 8.dp
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.Bottom
+            ) {
+                Text(
+                    text = formatWorkerPendingAmount(
+                        order.totalInSen
+                    ) + " · Order #${order.id}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.onSurfaceVariant,
+                    modifier = Modifier.weight(1f)
                 )
-            )
+
+                if (!expanded) {
+                    Text(
+                        text = "Press to expand",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colors.onSurfaceVariant,
+                        textAlign = TextAlign.End
+                    )
+                }
+            }
 
             if (expanded) {
                 AppActionButton(
@@ -433,49 +430,6 @@ private fun WorkerPendingDecisionDialog(
                 }
             ) {
                 Text("Close")
-            }
-        }
-    )
-}
-
-@Composable
-private fun WorkerPendingLogoutDialog(
-    onAction: (WorkerPendingOrderAction) -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = {
-            onAction(
-                WorkerPendingOrderAction.DismissLogoutClicked
-            )
-        },
-        title = {
-            Text("Log out?")
-        },
-        text = {
-            Text(
-                text = "You will return to the login screen."
-            )
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    onAction(
-                        WorkerPendingOrderAction.ConfirmLogoutClicked
-                    )
-                }
-            ) {
-                Text("Log out")
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = {
-                    onAction(
-                        WorkerPendingOrderAction.DismissLogoutClicked
-                    )
-                }
-            ) {
-                Text("Stay")
             }
         }
     )

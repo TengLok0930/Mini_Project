@@ -327,9 +327,9 @@ private fun PaymentOrderLine(
                 color = colors.onSurface
             )
 
-            item.drinkOption?.let { option ->
+            item.drinkSummary?.let { summary ->
                 Text(
-                    text = "Drink: ${option.displayName}",
+                    text = "Drink: $summary",
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.onSurfaceVariant
                 )
