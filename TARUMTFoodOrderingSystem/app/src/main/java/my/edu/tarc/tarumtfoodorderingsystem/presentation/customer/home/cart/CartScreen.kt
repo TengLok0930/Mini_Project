@@ -229,18 +229,18 @@ private fun CustomerCartItemRow(
                 )
             }
 
-            if (item.remarks.isNotBlank()) {
+            item.drinkSummary?.let { summary ->
                 Spacer(Modifier.height(6.dp))
 
-                item.drinkOption?.let { option ->
-                    Spacer(Modifier.height(6.dp))
+                Text(
+                    text = "Drink: $summary",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.onSurfaceVariant
+                )
+            }
 
-                    Text(
-                        text = "Drink: ${option.displayName}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colors.onSurfaceVariant
-                    )
-                }
+            if (item.remarks.isNotBlank()) {
+                Spacer(Modifier.height(6.dp))
 
                 Text(
                     text = "Remarks: ${item.remarks}",
@@ -262,7 +262,7 @@ private fun CustomerCartItemRow(
                     )
                 ) {
                     Text(
-                        text = "Modify order",
+                        text = "Modify item",
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = colors.primary

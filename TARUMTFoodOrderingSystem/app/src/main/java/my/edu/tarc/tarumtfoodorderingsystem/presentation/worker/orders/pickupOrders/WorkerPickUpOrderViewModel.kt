@@ -17,6 +17,7 @@ data class WorkerPickupOrderUiState(
     val storeName: String,
     val canteenName: String,
     val orders: List<WorkerOrder> = emptyList(),
+    val expandedOrderId: Int? = null,
     val acceptingOrders: Boolean = true,
     val showLogoutDialog: Boolean = false,
     val lastCollectedOrderId: Int? = null
@@ -47,7 +48,8 @@ data class WorkerPickupOrderUiState(
 
 private data class WorkerPickupOrderLocalState(
     val showLogoutDialog: Boolean = false,
-    val lastCollectedOrderId: Int? = null
+    val lastCollectedOrderId: Int? = null,
+    val expandedOrderId: Int? = null
 )
 
 class WorkerPickupOrderViewModel(
@@ -80,40 +82,57 @@ class WorkerPickupOrderViewModel(
     ) {
         when (action) {
             is WorkerPickupOrderAction.ConfirmCollectionClicked -> {
-                // The Route calls this only after the shared
-                // order has successfully changed to DELIVERED.
-                localState.update {
-                    it.copy(
+                localState.update { state ->
+                    state.copy(
+                        expandedOrderId = null,
                         lastCollectedOrderId = action.orderId
                     )
                 }
             }
 
-            WorkerPickupOrderAction.LogoutClicked -> {
-                localState.update {
-                    it.copy(
-                        showLogoutDialog = true
-                    )
-                }
-            }
-
-            WorkerPickupOrderAction.DismissLogoutClicked -> {
-                localState.update {
-                    it.copy(
-                        showLogoutDialog = false
-                    )
-                }
+            is WorkerPickupOrderAction.OrderClicked -> {
+                toggleExpandedOrder(
+                    orderId = action.orderId
+                )
             }
 
             WorkerPickupOrderAction.PendingOrdersClicked,
             WorkerPickupOrderAction.ActiveOrdersClicked,
             WorkerPickupOrderAction.CompletedOrdersClicked,
             WorkerPickupOrderAction.ItemsClicked,
-            WorkerPickupOrderAction.ConfirmLogoutClicked,
+            WorkerPickupOrderAction.ProfileClicked,
             is WorkerPickupOrderAction.AcceptingOrdersChanged -> {
-                // Navigation and shared-state changes are handled
-                // through callbacks in WorkerPickupOrderRoute.
+
             }
+        }
+    }
+
+    private fun toggleExpandedOrder(
+        orderId: Int
+    ) {
+        val shared = sharedState.value
+
+        val exists = shared.orders.any { order ->
+            order.id == orderId &&
+                    order.storeId == shared.storeId &&
+                    !order.isCancelled &&
+                    order.status == OrderStatus.READY
+        }
+
+        if (!exists) {
+            return
+        }
+
+        localState.update { state ->
+            state.copy(
+                expandedOrderId = if (
+                    state.expandedOrderId == orderId
+                ) {
+                    null
+                } else {
+                    orderId
+                }
+            )
         }
     }
 
@@ -126,6 +145,7 @@ class WorkerPickupOrderViewModel(
             storeName = shared.storeName,
             canteenName = shared.canteenName,
             orders = shared.orders,
+            expandedOrderId = local.expandedOrderId,
             acceptingOrders = shared.acceptingOrders,
             showLogoutDialog = local.showLogoutDialog,
             lastCollectedOrderId = local.lastCollectedOrderId

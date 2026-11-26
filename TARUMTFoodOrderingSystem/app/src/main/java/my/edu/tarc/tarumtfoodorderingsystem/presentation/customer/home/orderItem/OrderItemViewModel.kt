@@ -7,26 +7,41 @@ import kotlinx.coroutines.flow.update
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.menu.CustomerItemType
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.menu.CustomerMenuItem
 
+const val TAKEAWAY_SURCHARGE_IN_SEN = 70L
+
 enum class DrinkOption(
-    val displayName: String
+    val displayName: String,
+    val surchargeInSen: Long
 ) {
-    HOT("Hot"),
-    COLD("Cold"),
-    TAKEAWAY("Takeaway")
+    HOT("Hot", 0L),
+    COLD("Cold", 30L)
 }
 
 data class OrderItemDraft(
     val item: CustomerMenuItem,
     val quantity: Int,
     val remarks: String,
-    val drinkOption: DrinkOption?
-)
+    val drinkOption: DrinkOption?,
+    val takeaway: Boolean,
+    val unitPriceInSen: Long
+) {
+    val drinkSummary: String?
+        get() = buildList {
+            drinkOption?.let { add(it.displayName) }
+            if (takeaway) add ("Takeaway")
+        }.takeIf { it.isNotEmpty() }
+            ?.joinToString(" · ")
+
+    val lineTotalInSen: Long
+        get() = unitPriceInSen * quantity
+}
 
 data class OrderItemUiState(
     val item: CustomerMenuItem,
     val availableQuantity: Int,
     val quantity: Int = 1,
     val selectedDrinkOption: DrinkOption? = null,
+    val takeaway: Boolean = false,
     val remarks: String = ""
 ) {
     val isBeverage: Boolean
@@ -38,8 +53,17 @@ data class OrderItemUiState(
             availableQuantity.coerceAtLeast(0)
         )
 
+    val unitPriceInSen: Long
+        get() = item.priceInSen +
+                (selectedDrinkOption?.surchargeInSen ?: 0L) +
+                if (isBeverage && takeaway) {
+                    TAKEAWAY_SURCHARGE_IN_SEN
+                } else {
+                    0L
+                }
+
     val totalInSen: Long
-        get() = item.priceInSen * quantity
+        get() = unitPriceInSen * quantity
 
     val canOrder: Boolean
         get() = quantity in 1..maximumQuantity &&
@@ -116,6 +140,18 @@ class OrderItemViewModel(
                 }
             }
 
+            is OrderItemAction.TakeawayChanged -> {
+                _uiState.update { state ->
+                    if (state.isBeverage) {
+                        state.copy(
+                            takeaway = action.takeaway
+                        )
+                    } else {
+                        state
+                    }
+                }
+            }
+
             is OrderItemAction.RemarksChanged -> {
                 _uiState.update {
                     it.copy(
@@ -146,7 +182,9 @@ class OrderItemViewModel(
                 state.selectedDrinkOption
             } else {
                 null
-            }
+            },
+            takeaway = state.isBeverage && state.takeaway,
+            unitPriceInSen = state.unitPriceInSen
         )
     }
 }

@@ -14,6 +14,7 @@ fun CustomerProfileRoute(
     onNavigateToHome: () -> Unit,
     onNavigateToVouchers: () -> Unit,
     onLogoutRequested: () -> Unit,
+    onDeleteAccountRequested: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -55,6 +56,48 @@ fun CustomerProfileRoute(
                 CustomerProfileAction.ConfirmLogoutClicked -> {
                     viewModel.dismissLogoutConfirmation()
                     onLogoutRequested()
+                }
+
+                CustomerProfileAction.ChangePasswordClicked -> {
+                    viewModel.showChangePassword()
+                }
+
+                CustomerProfileAction.DismissChangePasswordClicked -> {
+                    viewModel.dismissChangePassword()
+                }
+
+                is CustomerProfileAction.CurrentPasswordChanged -> {
+                    viewModel.onCurrentPasswordChanged(action.value)
+                }
+
+                is CustomerProfileAction.NewPasswordChanged -> {
+                    viewModel.onNewPasswordChanged(action.value)
+                }
+
+                is CustomerProfileAction.ConfirmNewPasswordChanged -> {
+                    viewModel.onConfirmNewPasswordChanged(action.value)
+                }
+
+                CustomerProfileAction.SubmitPasswordChangeClicked -> {
+                    viewModel.submitPasswordChange()
+                }
+
+                CustomerProfileAction.PasswordChangedMessageShown -> {
+                    viewModel.passwordChangedMessageShown()
+                }
+
+                CustomerProfileAction.DeleteAccountClicked -> {
+                    viewModel.showDeleteConfirmation()
+                }
+
+                CustomerProfileAction.DismissDeleteAccountClicked -> {
+                    viewModel.dismissDeleteConfirmation()
+                }
+
+                CustomerProfileAction.ConfirmDeleteAccountClicked -> {
+                    // TODO: Delete the account and its data first.
+                    viewModel.dismissDeleteConfirmation()
+                    onDeleteAccountRequested()
                 }
             }
         }

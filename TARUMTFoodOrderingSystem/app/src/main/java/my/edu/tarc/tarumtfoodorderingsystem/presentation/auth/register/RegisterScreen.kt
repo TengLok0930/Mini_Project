@@ -338,10 +338,10 @@ private fun RegisterVisibilityButton(
             } else {
                 "Show password"
             },
-            tint = if (enabled) {
+            tint = if (isVisible) {
                 MaterialTheme.colorScheme.tertiary
             } else {
-                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                MaterialTheme.colorScheme.onSurfaceVariant
             }
         )
     }

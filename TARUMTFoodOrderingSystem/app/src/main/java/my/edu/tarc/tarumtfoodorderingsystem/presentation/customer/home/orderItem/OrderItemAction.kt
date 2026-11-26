@@ -12,6 +12,10 @@ sealed interface OrderItemAction {
         val option: DrinkOption
     ) : OrderItemAction
 
+    data class TakeawayChanged(
+        val takeaway: Boolean
+    ) : OrderItemAction
+
     data class RemarksChanged(
         val remarks: String
     ) : OrderItemAction

@@ -38,9 +38,7 @@ data class WorkerPendingOrderUiState(
     val orders: List<WorkerOrder> = emptyList(),
     val acceptingOrders: Boolean = true,
     val expandedOrderId: Int? = null,
-    val managingOrderId: Int? = null,
-    val showLogoutDialog: Boolean = false,
-    val notice: String? = null
+    val managingOrderId: Int? = null
 ) {
     val storeSubtitle: String
         get() = listOf(
@@ -93,8 +91,7 @@ class WorkerPendingOrderViewModel : ViewModel() {
             is WorkerPendingOrderAction.AcceptingOrdersChanged -> {
                 _uiState.update { state ->
                     state.copy(
-                        acceptingOrders = action.accepting,
-                        notice = null
+                        acceptingOrders = action.accepting
                     )
                 }
             }
@@ -131,27 +128,11 @@ class WorkerPendingOrderViewModel : ViewModel() {
                 }
             }
 
-            WorkerPendingOrderAction.LogoutClicked -> {
-                _uiState.update { state ->
-                    state.copy(
-                        showLogoutDialog = true
-                    )
-                }
-            }
-
-            WorkerPendingOrderAction.DismissLogoutClicked -> {
-                _uiState.update { state ->
-                    state.copy(
-                        showLogoutDialog = false
-                    )
-                }
-            }
-
+            WorkerPendingOrderAction.ProfileClicked,
             WorkerPendingOrderAction.CompletedOrdersClicked,
             WorkerPendingOrderAction.ItemsClicked,
             WorkerPendingOrderAction.ActiveOrdersClicked,
-            WorkerPendingOrderAction.PickupsClicked,
-            WorkerPendingOrderAction.ConfirmLogoutClicked -> {
+            WorkerPendingOrderAction.PickupsClicked -> {
                 // Navigation is handled by the Route.
             }
         }
@@ -203,9 +184,9 @@ class WorkerPendingOrderViewModel : ViewModel() {
         orderId: Int
     ) {
         _uiState.update { state ->
-            val order = state.pendingOrders.firstOrNull {
-                it.id == orderId
-            } ?: return@update state
+            if (state.pendingOrders.none { it.id == orderId }) {
+                return@update state
+            }
 
             state.copy(
                 orders = state.orders.map { existingOrder ->
@@ -218,9 +199,7 @@ class WorkerPendingOrderViewModel : ViewModel() {
                     }
                 },
                 expandedOrderId = null,
-                managingOrderId = null,
-                notice = "Pickup #${order.formattedPickupNumber} " +
-                        "accepted and moved to Active."
+                managingOrderId = null
             )
         }
     }
@@ -229,9 +208,9 @@ class WorkerPendingOrderViewModel : ViewModel() {
         orderId: Int
     ) {
         _uiState.update { state ->
-            val order = state.pendingOrders.firstOrNull {
-                it.id == orderId
-            } ?: return@update state
+            if (state.pendingOrders.none { it.id == orderId }) {
+                return@update state
+            }
 
             state.copy(
                 orders = state.orders.map { existingOrder ->
@@ -244,8 +223,7 @@ class WorkerPendingOrderViewModel : ViewModel() {
                     }
                 },
                 expandedOrderId = null,
-                managingOrderId = null,
-                notice = "Pickup #${order.formattedPickupNumber} cancelled."
+                managingOrderId = null
             )
         }
     }
@@ -255,12 +233,16 @@ class WorkerPendingOrderViewModel : ViewModel() {
     ): Boolean {
         val state = _uiState.value
 
-        val order = state.orders.firstOrNull {
+        val canMarkReady = state.orders.any {
             it.id == orderId &&
                     it.storeId == state.storeId &&
                     !it.isCancelled &&
                     it.status == OrderStatus.PREPARING
-        } ?: return false
+        }
+
+        if (!canMarkReady) {
+            return false
+        }
 
         _uiState.update { currentState ->
             currentState.copy(
@@ -274,9 +256,7 @@ class WorkerPendingOrderViewModel : ViewModel() {
                     }
                 },
                 expandedOrderId = null,
-                managingOrderId = null,
-                notice = "Pickup #${order.formattedPickupNumber} " +
-                        "is ready for collection."
+                managingOrderId = null
             )
         }
 
@@ -288,12 +268,16 @@ class WorkerPendingOrderViewModel : ViewModel() {
     ): Boolean {
         val state = _uiState.value
 
-        val order = state.orders.firstOrNull {
+        val canCollect = state.orders.any {
             it.id == orderId &&
                     it.storeId == state.storeId &&
                     !it.isCancelled &&
                     it.status == OrderStatus.READY
-        } ?: return false
+        }
+
+        if (!canCollect) {
+            return false
+        }
 
         val collectedAtMillis = System.currentTimeMillis()
 
@@ -310,8 +294,7 @@ class WorkerPendingOrderViewModel : ViewModel() {
                     }
                 },
                 expandedOrderId = null,
-                managingOrderId = null,
-                notice = "Pickup #${order.formattedPickupNumber} collected."
+                managingOrderId = null
             )
         }
 
@@ -343,6 +326,28 @@ private fun workerPendingOrderSampleData(
                 )
             ),
             totalInSen = 2150L
+        ),
+        WorkerOrder(
+            id = 1043,
+            storeId = storeId,
+            pickupNumber = 43,
+            createdAtMillis = System.currentTimeMillis() + 60_000L,
+            items = listOf(
+                WorkerOrderLine(
+                    id = 3,
+                    name = "Teh",
+                    quantity = 1,
+                    remarks = "Less sugar",
+                    drinkOption = "Cold · Takeaway"
+                ),
+                WorkerOrderLine(
+                    id = 4,
+                    name = "Teh",
+                    quantity = 1,
+                    drinkOption = "Hot"
+                )
+            ),
+            totalInSen = 740L
         )
     )
 }

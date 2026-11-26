@@ -8,8 +8,6 @@ import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.menu.Cust
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.orderItem.DrinkOption
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.customer.home.orderItem.OrderItemDraft
 import kotlin.plus
-
-val drinkOption: DrinkOption? = null
 data class CustomerCartItem(
     val id: Int,
     val menuItemId: Int,
@@ -21,10 +19,18 @@ data class CustomerCartItem(
     val remarks: String = "",
     val imageUrl: String? = null,
     val imageRes: Int? = null,
-    val drinkOption: DrinkOption? = null
+    val drinkOption: DrinkOption? = null,
+    val takeaway: Boolean = false
 ) {
     val lineTotalInSen: Long
         get() = unitPriceInSen * quantity
+
+    val drinkSummary: String?
+        get() = buildList {
+            drinkOption?.let { add(it.displayName) }
+            if (takeaway) add("Takeaway")
+        }.takeIf { it.isNotEmpty() }
+            ?.joinToString(", ")
 }
 
 data class CartUiState(
@@ -273,7 +279,7 @@ class CartViewModel(
             menuItemId = item.id,
             storeId = item.storeId,
             name = item.name,
-            unitPriceInSen = item.priceInSen,
+            unitPriceInSen = draft.unitPriceInSen,
             quantity = draft.quantity,
             maximumQuantity = item.quantityRemaining,
             remarks = draft.remarks.trim(),
@@ -285,7 +291,9 @@ class CartViewModel(
                 draft.drinkOption
             } else {
                 null
-            }
+            },
+            takeaway = item.itemType == CustomerItemType.BEVERAGE &&
+                    draft.takeaway
         )
 
         _uiState.update {

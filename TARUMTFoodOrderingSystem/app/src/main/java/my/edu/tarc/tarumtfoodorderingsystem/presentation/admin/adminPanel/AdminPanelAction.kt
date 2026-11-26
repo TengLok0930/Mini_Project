@@ -8,7 +8,7 @@ sealed interface AdminPanelAction {
 
     data object MenuMaintenanceClicked : AdminPanelAction
 
-    data object OrderReportingClicked : AdminPanelAction
+    data object SalesReportingClicked : AdminPanelAction
 
     data object LogoutClicked : AdminPanelAction
 

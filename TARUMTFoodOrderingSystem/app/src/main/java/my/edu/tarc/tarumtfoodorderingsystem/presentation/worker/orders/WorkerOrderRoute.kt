@@ -14,7 +14,7 @@ fun WorkerOrderRoute(
     onNavigateToItems: () -> Unit,
     onAcceptingOrdersChanged: (Boolean) -> Unit,
     onMarkReadyForPickup: (Int) -> Boolean,
-    onLogoutRequested: () -> Unit,
+    onNavigateToWorkerProfile: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -56,12 +56,8 @@ fun WorkerOrderRoute(
                     }
                 }
 
-                WorkerOrderAction.ConfirmLogoutClicked -> {
-                    viewModel.onAction(
-                        WorkerOrderAction.DismissLogoutClicked
-                    )
-
-                    onLogoutRequested()
+                WorkerOrderAction.ProfileClicked -> {
+                    onNavigateToWorkerProfile()
                 }
 
                 else -> {

@@ -6,8 +6,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -15,6 +17,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import java.math.BigDecimal
 import java.util.Locale
@@ -37,6 +43,17 @@ fun CustomerProfileScreen(
             "RM %,.2f",
             BigDecimal.valueOf(uiState.totalSpentInSen, 2)
         )
+    }
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(uiState.showPasswordChangedMessage) {
+        if (uiState.showPasswordChangedMessage) {
+            snackbarHostState.showSnackbar(
+                "Password changed successfully"
+            )
+            onAction(CustomerProfileAction.PasswordChangedMessageShown)
+        }
     }
 
     Scaffold(
@@ -68,6 +85,9 @@ fun CustomerProfileScreen(
                     }
                 }
             )
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
         }
     ) { innerPadding ->
         Box(
@@ -113,7 +133,26 @@ fun CustomerProfileScreen(
                             color = colors.onSurfaceVariant
                         )
 
-                        Spacer(Modifier.height(12.dp))
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.CenterEnd
+                        ) {
+                            TextButton(
+                                onClick = {
+                                    onAction(
+                                        CustomerProfileAction
+                                            .ChangePasswordClicked
+                                    )
+                                }
+                            ) {
+                                Text(
+                                    text = "Change password",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.secondary
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -224,6 +263,28 @@ fun CustomerProfileScreen(
                         )
                     }
                 }
+
+                item(key = "delete_account") {
+                    TextButton(
+                        onClick = {
+                            onAction(
+                                CustomerProfileAction.DeleteAccountClicked
+                            )
+                        },
+                        contentPadding = PaddingValues(
+                            horizontal = 0.dp,
+                            vertical = 8.dp
+                        )
+                    ) {
+                        Text(
+                            text = "Delete Account",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.error,
+                            textDecoration = TextDecoration.Underline
+                        )
+                    }
+                }
             }
         }
     }
@@ -237,7 +298,7 @@ fun CustomerProfileScreen(
                 Text("Log out?")
             },
             text = {
-                Text("Are you sure you want to log out of your account?")
+                Text("Are you sure you want to log out?")
             },
             confirmButton = {
                 TextButton(
@@ -255,6 +316,55 @@ fun CustomerProfileScreen(
                 TextButton(
                     onClick = {
                         onAction(CustomerProfileAction.DismissLogoutClicked)
+                    }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    if (uiState.showChangePasswordDialog) {
+        ChangePasswordDialog(
+            uiState = uiState,
+            onAction = onAction
+        )
+    }
+
+    if (uiState.showDeleteConfirmation) {
+        AlertDialog(
+            onDismissRequest = {
+                onAction(CustomerProfileAction.DismissDeleteAccountClicked)
+            },
+            title = {
+                Text("Delete account?")
+            },
+            text = {
+                Text(
+                    "This permanently deletes your account and cannot " +
+                            "be undone."
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onAction(
+                            CustomerProfileAction.ConfirmDeleteAccountClicked
+                        )
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = colors.error
+                    )
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        onAction(
+                            CustomerProfileAction.DismissDeleteAccountClicked
+                        )
                     }
                 ) {
                     Text("Cancel")
@@ -395,4 +505,101 @@ private fun ProfileAppearanceOption(
             }
         )
     }
+}
+
+@Composable
+private fun ChangePasswordDialog(
+    uiState: CustomerProfileUiState,
+    onAction: (CustomerProfileAction) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = {
+            onAction(CustomerProfileAction.DismissChangePasswordClicked)
+        },
+        title = {
+            Text("Change password")
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                OutlinedTextField(
+                    value = uiState.currentPassword,
+                    onValueChange = {
+                        onAction(
+                            CustomerProfileAction.CurrentPasswordChanged(it)
+                        )
+                    },
+                    label = { Text("Current password") },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Next
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = uiState.newPassword,
+                    onValueChange = {
+                        onAction(
+                            CustomerProfileAction.NewPasswordChanged(it)
+                        )
+                    },
+                    label = { Text("New password") },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Next
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = uiState.confirmNewPassword,
+                    onValueChange = {
+                        onAction(
+                            CustomerProfileAction.ConfirmNewPasswordChanged(it)
+                        )
+                    },
+                    label = { Text("Confirm new password") },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Done
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                uiState.passwordError?.let { error ->
+                    Text(
+                        text = error,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onAction(CustomerProfileAction.SubmitPasswordChangeClicked)
+                }
+            ) {
+                Text("Change")
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = {
+                    onAction(CustomerProfileAction.DismissChangePasswordClicked)
+                }
+            ) {
+                Text("Cancel")
+            }
+        }
+    )
 }

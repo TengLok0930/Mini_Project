@@ -19,7 +19,6 @@ data class WorkerOrderUiState(
     val orders: List<WorkerOrder> = emptyList(),
     val acceptingOrders: Boolean = true,
     val expandedOrderId: Int? = null,
-    val showLogoutDialog: Boolean = false
 ) {
     val storeSubtitle: String
         get() = listOf(
@@ -43,6 +42,10 @@ data class WorkerOrderUiState(
                     it.id
                 }
             )
+
+    private data class WorkerOrderLocalState(
+        val expandedOrderId: Int? = null
+    )
 }
 
 private data class WorkerOrderLocalState(
@@ -93,27 +96,11 @@ class WorkerOrderViewModel(
                 }
             }
 
-            WorkerOrderAction.LogoutClicked -> {
-                localState.update {
-                    it.copy(
-                        showLogoutDialog = true
-                    )
-                }
-            }
-
-            WorkerOrderAction.DismissLogoutClicked -> {
-                localState.update {
-                    it.copy(
-                        showLogoutDialog = false
-                    )
-                }
-            }
-
             WorkerOrderAction.PendingOrdersClicked,
             WorkerOrderAction.PickupsClicked,
             WorkerOrderAction.CompletedOrdersClicked,
             WorkerOrderAction.ItemsClicked,
-            WorkerOrderAction.ConfirmLogoutClicked,
+            WorkerOrderAction.ProfileClicked,
             is WorkerOrderAction.AcceptingOrdersChanged -> {
                 // Navigation and shared-state changes are handled
                 // through callbacks in WorkerOrderRoute.
@@ -160,8 +147,14 @@ class WorkerOrderViewModel(
             canteenName = shared.canteenName,
             orders = shared.orders,
             acceptingOrders = shared.acceptingOrders,
-            expandedOrderId = local.expandedOrderId,
-            showLogoutDialog = local.showLogoutDialog
+            expandedOrderId = local.expandedOrderId.takeIf { id ->
+                shared.orders.any { order ->
+                    order.id == id &&
+                            order.storeId == shared.storeId &&
+                            !order.isCancelled &&
+                            order.status == OrderStatus.PREPARING
+                }
+            }
         )
     }
 }

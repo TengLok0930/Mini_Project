@@ -90,10 +90,10 @@ fun AdminPanelScreen(
                 )
 
                 AdminPanelMenuButton(
-                    text = "Order Reporting",
+                    text = "Sales Reporting",
                     onClick = {
                         onAction(
-                            AdminPanelAction.OrderReportingClicked
+                            AdminPanelAction.SalesReportingClicked
                         )
                     }
                 )

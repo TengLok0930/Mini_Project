@@ -32,7 +32,7 @@ class AdminPanelViewModel : ViewModel() {
             AdminPanelAction.CanteenMaintenanceClicked,
             AdminPanelAction.StoreMaintenanceClicked,
             AdminPanelAction.MenuMaintenanceClicked,
-            AdminPanelAction.OrderReportingClicked -> Unit
+            AdminPanelAction.SalesReportingClicked -> Unit
         }
     }
 }

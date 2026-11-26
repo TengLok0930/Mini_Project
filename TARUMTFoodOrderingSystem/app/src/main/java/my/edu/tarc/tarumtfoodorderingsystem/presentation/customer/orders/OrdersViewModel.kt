@@ -19,7 +19,8 @@ data class CustomerOrderLine(
     val id: Int,
     val name: String,
     val quantity: Int,
-    val remarks: String? = null
+    val remarks: String? = null,
+    val drinkOption: String? = null
 )
 
 data class CustomerOrder(
@@ -135,24 +136,14 @@ class OrdersViewModel : ViewModel() {
             placedAtMillis = System.currentTimeMillis(),
             status = OrderStatus.ORDERED,
             items = request.items.map { cartItem ->
-                val remarksSummary = listOfNotNull(
-                    cartItem.drinkOption?.let {
-                        "Drink: ${it.displayName}"
-                    },
-                    cartItem.remarks.takeIf {
-                        it.isNotBlank()
-                    }
-                )
-                    .joinToString(" · ")
-                    .takeIf {
-                        it.isNotBlank()
-                    }
-
                 CustomerOrderLine(
                     id = cartItem.id,
                     name = cartItem.name,
                     quantity = cartItem.quantity,
-                    remarks = remarksSummary
+                    remarks = cartItem.remarks
+                        .trim()
+                        .takeIf { it.isNotBlank() },
+                    drinkOption = cartItem.drinkSummary
                 )
             },
             totalInSen = request.totalInSen,
@@ -282,6 +273,28 @@ internal fun customerOrderSampleData(): List<CustomerOrder> {
             storeName = "Chicken Rice",
             canteenName = "Yum Yum Cafeteria",
             totalInSen = 1500L
+        ),
+        CustomerOrder(
+            id = 1031,
+            pickupNumber = "031",
+            placedAtMillis = sampleTime(
+                daysAgo = 10,
+                hour = 12,
+                minute = 45
+            ),
+            status = OrderStatus.DELIVERED,
+            items = listOf(
+                CustomerOrderLine(
+                    id = 7,
+                    name = "Teh",
+                    quantity = 1,
+                    remarks = "Less sugar",
+                    drinkOption = "Cold · Takeaway"
+                )
+            ),
+            storeName = "Chicken Rice",
+            canteenName = "Yum Yum Cafeteria",
+            totalInSen = 420L
         )
     )
 }

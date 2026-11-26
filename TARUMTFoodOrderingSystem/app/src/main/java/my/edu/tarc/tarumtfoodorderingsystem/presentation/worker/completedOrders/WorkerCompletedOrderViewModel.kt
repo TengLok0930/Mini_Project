@@ -68,7 +68,6 @@ data class WorkerCompletedOrderUiState(
 
 private data class WorkerCompletedOrderLocalState(
     val searchQuery: String = "",
-    val showLogoutDialog: Boolean = false
 )
 
 class WorkerCompletedOrderViewModel(
@@ -108,25 +107,9 @@ class WorkerCompletedOrderViewModel(
                 }
             }
 
-            WorkerCompletedOrderAction.LogoutClicked -> {
-                localState.update {
-                    it.copy(
-                        showLogoutDialog = true
-                    )
-                }
-            }
-
-            WorkerCompletedOrderAction.DismissLogoutClicked -> {
-                localState.update {
-                    it.copy(
-                        showLogoutDialog = false
-                    )
-                }
-            }
-
             WorkerCompletedOrderAction.OrdersClicked,
             WorkerCompletedOrderAction.ItemsClicked,
-            WorkerCompletedOrderAction.ConfirmLogoutClicked -> {
+            WorkerCompletedOrderAction.ProfileClicked -> {
                 // Navigation is handled by the Route.
             }
         }
@@ -141,8 +124,7 @@ class WorkerCompletedOrderViewModel(
             storeName = shared.storeName,
             canteenName = shared.canteenName,
             orders = shared.orders,
-            searchQuery = local.searchQuery,
-            showLogoutDialog = local.showLogoutDialog
+            searchQuery = local.searchQuery
         )
     }
 }

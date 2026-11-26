@@ -32,9 +32,5 @@ sealed interface WorkerPendingOrderAction {
 
     data object DismissOrderDialogClicked : WorkerPendingOrderAction
 
-    data object LogoutClicked : WorkerPendingOrderAction
-
-    data object ConfirmLogoutClicked : WorkerPendingOrderAction
-
-    data object DismissLogoutClicked : WorkerPendingOrderAction
+    data object ProfileClicked : WorkerPendingOrderAction
 }
