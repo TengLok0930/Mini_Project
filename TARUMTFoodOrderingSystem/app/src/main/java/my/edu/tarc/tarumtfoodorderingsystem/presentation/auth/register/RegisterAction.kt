@@ -6,6 +6,10 @@ sealed interface RegisterAction {
         val value: String
     ) : RegisterAction
 
+    data class UserNameChanged(
+        val value: String
+    ) : RegisterAction
+
     data class EmailChanged(
         val value: String
     ) : RegisterAction
