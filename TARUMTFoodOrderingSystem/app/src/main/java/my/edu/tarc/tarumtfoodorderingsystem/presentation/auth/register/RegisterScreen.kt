@@ -1,6 +1,5 @@
 package my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.register
 
-import android.R.attr.maxHeight
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -39,6 +38,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -139,6 +139,36 @@ fun RegisterScreen(
                         colors = registerTextFieldColors(),
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Next
+                        )
+                    )
+
+                    Spacer(Modifier.height(20.dp))
+
+                    RegisterFieldLabel(text = "User Name")
+
+                    Spacer(Modifier.height(8.dp))
+
+                    TextField(
+                        value = uiState.userName,
+                        onValueChange = {
+                            onAction(RegisterAction.UserNameChanged(it))
+                        },
+                        enabled = interactionsEnabled,
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        placeholder = {
+                            Text("Enter your Name")
+                        },
+                        isError = uiState.userNameError != null,
+                        supportingText = uiState.userNameError?.let { error ->
+                            { Text(error) }
+                        },
+                        shape = RoundedCornerShape(14.dp),
+                        colors = registerTextFieldColors(),
+                        keyboardOptions = KeyboardOptions(
+                            capitalization = KeyboardCapitalization.Words,
+                            keyboardType = KeyboardType.Text,
                             imeAction = ImeAction.Next
                         )
                     )

@@ -11,6 +11,7 @@ import kotlin.coroutines.cancellation.CancellationException
 
 data class RegisterUiState(
     val userId: String = "",
+    val userName: String = "",
     val email: String = "",
     val password: String = "",
     val confirmPassword: String = "",
@@ -18,6 +19,7 @@ data class RegisterUiState(
     val isConfirmPasswordVisible: Boolean = false,
     val isLoading: Boolean = false,
     val userIdError: String? = null,
+    val userNameError: String? = null,
     val emailError: String? = null,
     val passwordError: String? = null,
     val confirmPasswordError: String? = null,
@@ -29,6 +31,7 @@ data class RegisterUiState(
 fun interface RegistrationService {
     suspend fun register(
         userId: Int,
+        userName: String,
         email: String,
         password: String
     )
@@ -51,6 +54,16 @@ class RegisterViewModel(private val registrationService: RegistrationService) : 
                         userId = action.value,
                         userIdError = null,
                         registerError = null
+                    )
+                }
+            }
+
+            is RegisterAction.UserNameChanged -> {
+                _uiState.update {
+                    it.copy(
+                        userName = action.value,
+                        userNameError = null,
+                        registerError = null,
                     )
                 }
             }
@@ -112,14 +125,28 @@ class RegisterViewModel(private val registrationService: RegistrationService) : 
     private fun register() {
         val currentState = _uiState.value
         val userIdText = currentState.userId.trim()
+        val userName = currentState.userName.trim()
         val email = currentState.email.trim()
 
         val userIdError = when {
             userIdText.isBlank() ->
-                "Please enter your user ID."
+                "Please enter your User ID."
 
             !USER_ID_REGEX.matches(userIdText) ->
-                "User ID must contain exactly 7 digits."
+                "Please enter a valid User ID."
+
+            else -> null
+        }
+
+        val userNameError = when {
+            userName.isBlank() ->
+                "Please enter your name."
+
+            userName.length < MIN_USER_NAME_LENGTH ->
+                "Name must contain at least $MIN_USER_NAME_LENGTH characters."
+
+            userName.length > MAX_USER_NAME_LENGTH ->
+                "Name must not exceed $MAX_USER_NAME_LENGTH characters."
 
             else -> null
         }
@@ -167,6 +194,7 @@ class RegisterViewModel(private val registrationService: RegistrationService) : 
         _uiState.update {
             it.copy(
                 userIdError = userIdError,
+                userNameError = userNameError,
                 emailError = emailError,
                 passwordError = passwordError,
                 confirmPasswordError = confirmPasswordError,
@@ -176,6 +204,7 @@ class RegisterViewModel(private val registrationService: RegistrationService) : 
 
         if (
             userIdError != null ||
+            userNameError != null ||
             emailError != null ||
             passwordError != null ||
             confirmPasswordError != null
@@ -193,6 +222,7 @@ class RegisterViewModel(private val registrationService: RegistrationService) : 
             try {
                 registrationService.register(
                     userId = validUserId,
+                    userName = userName,
                     email = email,
                     password = currentState.password
                 )
@@ -230,8 +260,12 @@ class RegisterViewModel(private val registrationService: RegistrationService) : 
 
     private companion object {
         const val MIN_PASSWORD_LENGTH = 8
+        const val MIN_USER_NAME_LENGTH = 2
+        const val MAX_USER_NAME_LENGTH = 50
 
-        val USER_ID_REGEX = Regex("""[0-9]{7}""")
+        // Staff: exactly 4 digits (e.g. 1023)
+        // Student: 7 digits, first 2 digits from 22 to 27 (e.g. 2509582)
+        val USER_ID_REGEX = Regex("""[0-9]{4}|2[2-7][0-9]{5}""")
 
         val EMAIL_DOMAIN_REGEX = Regex(
             pattern = """[^@\s]+@(?:student\.)?tarc\.edu\.my""",

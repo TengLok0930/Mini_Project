@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 import kotlinx.io.IOException
 import my.edu.tarc.tarumtfoodorderingsystem.data.local.UserPreferencesRepository
 import my.edu.tarc.tarumtfoodorderingsystem.navigation.AppNavHost
+import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.AuthValidation
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.LoginAuthenticator
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.TestLoginRole
 import my.edu.tarc.tarumtfoodorderingsystem.presentation.auth.register.RegistrationService
@@ -29,16 +30,13 @@ class MainActivity : ComponentActivity() {
     // This is a placeholder because supabase not implemented yet (Need replace later)
     private val authRepository: LoginAuthenticator by lazy {
         LoginAuthenticator { userId, _ ->
-            when (userId) {
-                2222222 -> TestLoginRole.WORKER
-                3333333 -> TestLoginRole.ADMIN
-                else -> TestLoginRole.CUSTOMER
-            }
+            AuthValidation.roleForUserId(userId)
+                ?: throw IllegalArgumentException("Invalid credentials")
         }
     }
 
     private val registrationService: RegistrationService by lazy {
-        RegistrationService { _, _, _ ->
+        RegistrationService { _, _, _, _->
             throw IllegalStateException(
                 "Supabase registration has not been implemented yet."
             )
