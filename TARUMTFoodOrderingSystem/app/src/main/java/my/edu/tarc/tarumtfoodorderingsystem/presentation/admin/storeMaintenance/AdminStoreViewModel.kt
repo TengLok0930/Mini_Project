@@ -176,4 +176,14 @@ class AdminStoreViewModel : ViewModel() {
             )
         }
     }
+
+    fun deleteStore(storeId: Int) {
+        _uiState.update { state ->
+            state.copy(
+                stores = state.stores.filterNot { store ->
+                    store.id == storeId
+                }
+            )
+        }
+    }
 }

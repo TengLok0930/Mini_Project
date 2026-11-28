@@ -73,4 +73,14 @@ class AdminCanteenViewModel : ViewModel() {
             )
         }
     }
+
+    fun deleteCanteen(canteenId: Int) {
+        _uiState.update { state ->
+            state.copy(
+                canteens = state.canteens.filterNot { canteen ->
+                    canteen.id == canteenId
+                }
+            )
+        }
+    }
 }

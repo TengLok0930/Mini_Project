@@ -28,7 +28,9 @@ data class AdminEditCanteenUiState(
     val nameError: String? = null,
     val imageError: String? = null,
     val isReadingImage: Boolean = false,
-    val pendingUpdate: UpdatedCanteenDraft? = null
+    val pendingUpdate: UpdatedCanteenDraft? = null,
+    val showDeleteDialog: Boolean = false,
+    val pendingDelete: Int? = null
 )
 
 class AdminEditCanteenViewModel(
@@ -47,9 +49,36 @@ class AdminEditCanteenViewModel(
     val uiState = _uiState.asStateFlow()
 
     fun onAction(action: AdminEditCanteenAction) {
-        if (_uiState.value.pendingUpdate != null) return
+        if (_uiState.value.pendingUpdate != null || _uiState.value.pendingDelete != null) return
 
         when (action) {
+            AdminEditCanteenAction.DeleteClicked -> {
+                val state = _uiState.value
+
+                if (state.canteenId != null && !state.isReadingImage) {
+                    _uiState.update {
+                        it.copy(showDeleteDialog = true)
+                    }
+                }
+            }
+
+            AdminEditCanteenAction.DismissDeleteClicked -> {
+                _uiState.update {
+                    it.copy(showDeleteDialog = false)
+                }
+            }
+
+            AdminEditCanteenAction.ConfirmDeleteClicked -> {
+                val canteenId = _uiState.value.canteenId ?: return
+
+                _uiState.update {
+                    it.copy(
+                        showDeleteDialog = false,
+                        pendingDelete = canteenId
+                    )
+                }
+            }
+
             is AdminEditCanteenAction.NameChanged -> {
                 _uiState.update {
                     it.copy(
@@ -95,7 +124,8 @@ class AdminEditCanteenViewModel(
         if (
             state.canteenId == null ||
             state.isReadingImage ||
-            state.pendingUpdate != null
+            state.pendingUpdate != null ||
+            state.pendingDelete != null
         ) {
             return
         }
@@ -226,6 +256,12 @@ class AdminEditCanteenViewModel(
     fun onUpdateHandled() {
         _uiState.update {
             it.copy(pendingUpdate = null)
+        }
+    }
+
+    fun onDeleteHandled() {
+        _uiState.update {
+            it.copy(pendingDelete = null)
         }
     }
 }

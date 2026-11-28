@@ -1722,6 +1722,17 @@ fun AppNavHost(
                 onNavigateBack = {
                     navController.popBackStack()
                 },
+                onDeleteCanteen = { id ->
+                    maintenanceViewModel.deleteCanteen(id)
+
+                    Toast.makeText(
+                        context,
+                        "Canteen deleted locally.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                    navController.popBackStack()
+                },
                 onUpdateCanteen = { draft ->
                     maintenanceViewModel.updateCanteen(
                         canteenId = draft.canteenId,
@@ -1850,6 +1861,17 @@ fun AppNavHost(
             AdminEditStoreRoute(
                 viewModel = editViewModel,
                 onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onDeleteStore = { id ->
+                    maintenanceViewModel.deleteStore(id)
+
+                    Toast.makeText(
+                        context,
+                        "Store deleted locally.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
                     navController.popBackStack()
                 },
                 onUpdateStore = { draft ->
