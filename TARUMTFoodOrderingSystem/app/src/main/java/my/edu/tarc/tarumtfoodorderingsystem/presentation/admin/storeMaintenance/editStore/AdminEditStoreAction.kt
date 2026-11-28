@@ -4,6 +4,12 @@ sealed interface AdminEditStoreAction {
 
     data object BackClicked : AdminEditStoreAction
 
+    data object DeleteClicked : AdminEditStoreAction
+
+    data object ConfirmDeleteClicked : AdminEditStoreAction
+
+    data object DismissDeleteClicked : AdminEditStoreAction
+
     data class NameChanged(
         val value: String
     ) : AdminEditStoreAction

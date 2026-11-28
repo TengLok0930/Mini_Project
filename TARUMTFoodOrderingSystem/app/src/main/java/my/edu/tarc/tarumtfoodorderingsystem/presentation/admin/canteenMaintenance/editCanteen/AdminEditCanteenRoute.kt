@@ -21,6 +21,7 @@ import kotlinx.coroutines.CancellationException
 fun AdminEditCanteenRoute(
     viewModel: AdminEditCanteenViewModel,
     onNavigateBack: () -> Unit,
+    onDeleteCanteen: (canteenId: Int) -> Unit,
     onUpdateCanteen: (UpdatedCanteenDraft) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -28,6 +29,7 @@ fun AdminEditCanteenRoute(
     val context = LocalContext.current
 
     val currentOnUpdate by rememberUpdatedState(onUpdateCanteen)
+    val currentOnDelete by rememberUpdatedState(onDeleteCanteen)
 
     val cropLauncher = rememberLauncherForActivityResult(
         contract = CropImageContract()
@@ -91,6 +93,13 @@ fun AdminEditCanteenRoute(
         }
     }
 
+    LaunchedEffect(uiState.pendingDelete) {
+        uiState.pendingDelete?.let { canteenId ->
+            viewModel.onDeleteHandled()
+            currentOnDelete(canteenId)
+        }
+    }
+
     AdminEditCanteenScreen(
         uiState = uiState,
         modifier = modifier,
@@ -104,7 +113,8 @@ fun AdminEditCanteenRoute(
                     if (
                         uiState.canteenId != null &&
                         !uiState.isReadingImage &&
-                        uiState.pendingUpdate == null
+                        uiState.pendingUpdate == null &&
+                        uiState.pendingDelete == null
                     ) {
                         imagePicker.launch(
                             PickVisualMediaRequest(

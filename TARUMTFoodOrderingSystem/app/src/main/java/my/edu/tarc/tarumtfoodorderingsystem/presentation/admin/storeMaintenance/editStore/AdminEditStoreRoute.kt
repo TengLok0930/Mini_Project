@@ -21,6 +21,7 @@ import kotlinx.coroutines.CancellationException
 fun AdminEditStoreRoute(
     viewModel: AdminEditStoreViewModel,
     onNavigateBack: () -> Unit,
+    onDeleteStore: (storeId: Int) -> Unit,
     onUpdateStore: (UpdatedStoreDraft) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -28,6 +29,7 @@ fun AdminEditStoreRoute(
     val context = LocalContext.current
 
     val currentOnUpdate by rememberUpdatedState(onUpdateStore)
+    val currentOnDelete by rememberUpdatedState(onDeleteStore)
 
     val cropLauncher = rememberLauncherForActivityResult(
         contract = CropImageContract()
@@ -91,6 +93,13 @@ fun AdminEditStoreRoute(
         }
     }
 
+    LaunchedEffect(uiState.pendingDelete) {
+        uiState.pendingDelete?.let { storeId ->
+            viewModel.onDeleteHandled()
+            currentOnDelete(storeId)
+        }
+    }
+
     AdminEditStoreScreen(
         uiState = uiState,
         modifier = modifier,
@@ -104,7 +113,8 @@ fun AdminEditStoreRoute(
                     if (
                         uiState.storeId != null &&
                         !uiState.isReadingImage &&
-                        uiState.pendingUpdate == null
+                        uiState.pendingUpdate == null &&
+                        uiState.pendingDelete == null
                     ) {
                         imagePicker.launch(
                             PickVisualMediaRequest(

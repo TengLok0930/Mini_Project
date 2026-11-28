@@ -16,6 +16,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -24,6 +25,7 @@ import coil.compose.AsyncImage
 import my.edu.tarc.tarumtfoodorderingsystem.ui.components.AppActionButton
 import my.edu.tarc.tarumtfoodorderingsystem.ui.components.AppFieldLabel
 import my.edu.tarc.tarumtfoodorderingsystem.ui.components.AppTopBar
+import my.edu.tarc.tarumtfoodorderingsystem.R
 
 @Composable
 fun AdminEditCanteenScreen(
@@ -35,7 +37,8 @@ fun AdminEditCanteenScreen(
     val focusManager = LocalFocusManager.current
 
     val enabled = uiState.canteenId != null &&
-            uiState.pendingUpdate == null
+            uiState.pendingUpdate == null &&
+            uiState.pendingDelete == null
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -85,10 +88,36 @@ fun AdminEditCanteenScreen(
                         Spacer(Modifier.height(20.dp))
                     }
 
-                    AppFieldLabel(
-                        title = "Edit Canteen Name",
-                        required = true
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            AppFieldLabel(
+                                title = "Edit Canteen Name",
+                                required = true
+                            )
+                        }
+
+                        IconButton(
+                            enabled = enabled && !uiState.isReadingImage,
+                            onClick = {
+                                focusManager.clearFocus()
+                                onAction(AdminEditCanteenAction.DeleteClicked)
+                            }
+                        ) {
+                            Icon(
+                                painter = painterResource(
+                                    R.drawable.delete_40px
+                                ),
+                                contentDescription = "Delete canteen",
+                                tint = colors.error,
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.height(4.dp))
 
                     Spacer(Modifier.height(8.dp))
 
@@ -252,5 +281,43 @@ fun AdminEditCanteenScreen(
                 )
             }
         }
+    }
+
+    if (uiState.showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                onAction(AdminEditCanteenAction.DismissDeleteClicked)
+            },
+            title = {
+                Text("Delete canteen?")
+            },
+            text = {
+                Text(
+                    text = "\"${uiState.originalName}\" will be " +
+                            "permanently deleted. This cannot be undone."
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onAction(AdminEditCanteenAction.ConfirmDeleteClicked)
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = colors.error
+                    )
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        onAction(AdminEditCanteenAction.DismissDeleteClicked)
+                    }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }

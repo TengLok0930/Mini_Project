@@ -4,6 +4,12 @@ sealed interface AdminEditCanteenAction {
 
     data object BackClicked : AdminEditCanteenAction
 
+    data object DeleteClicked : AdminEditCanteenAction
+
+    data object ConfirmDeleteClicked : AdminEditCanteenAction
+
+    data object DismissDeleteClicked : AdminEditCanteenAction
+
     data class NameChanged(
         val value: String
     ) : AdminEditCanteenAction

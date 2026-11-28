@@ -23,13 +23,16 @@ data class UpdatedStoreDraft(
 
 data class AdminEditStoreUiState(
     val storeId: Int? = null,
+    val originalName: String = "",
     val canteenName: String = "",
     val name: String = "",
     val imageUri: String? = null,
     val nameError: String? = null,
     val imageError: String? = null,
     val isReadingImage: Boolean = false,
-    val pendingUpdate: UpdatedStoreDraft? = null
+    val pendingUpdate: UpdatedStoreDraft? = null,
+    val showDeleteDialog: Boolean = false,
+    val pendingDelete: Int? = null
 )
 
 class AdminEditStoreViewModel(
@@ -42,6 +45,7 @@ class AdminEditStoreViewModel(
             storeId = store?.id?.takeIf {
                 canteen != null && store.canteenId == canteen.id
             },
+            originalName = store?.name.orEmpty(),
             canteenName = canteen?.name.orEmpty(),
             name = store?.name.orEmpty(),
             imageUri = store?.imageUri
@@ -51,9 +55,36 @@ class AdminEditStoreViewModel(
     val uiState = _uiState.asStateFlow()
 
     fun onAction(action: AdminEditStoreAction) {
-        if (_uiState.value.pendingUpdate != null) return
+        if (_uiState.value.pendingUpdate !=  null || _uiState.value.pendingDelete != null) return
 
         when (action) {
+            AdminEditStoreAction.DeleteClicked -> {
+                val state = _uiState.value
+
+                if (state.storeId != null && !state.isReadingImage) {
+                    _uiState.update {
+                        it.copy(showDeleteDialog = true)
+                    }
+                }
+            }
+
+            AdminEditStoreAction.DismissDeleteClicked -> {
+                _uiState.update {
+                    it.copy(showDeleteDialog = false)
+                }
+            }
+
+            AdminEditStoreAction.ConfirmDeleteClicked -> {
+                val storeId = _uiState.value.storeId ?: return
+
+                _uiState.update {
+                    it.copy(
+                        showDeleteDialog = false,
+                        pendingDelete = storeId
+                    )
+                }
+            }
+
             is AdminEditStoreAction.NameChanged -> {
                 _uiState.update {
                     it.copy(
@@ -99,7 +130,8 @@ class AdminEditStoreViewModel(
         if (
             state.storeId == null ||
             state.isReadingImage ||
-            state.pendingUpdate != null
+            state.pendingUpdate != null ||
+            state.pendingDelete != null
         ) {
             return
         }
@@ -230,6 +262,12 @@ class AdminEditStoreViewModel(
     fun onUpdateHandled() {
         _uiState.update {
             it.copy(pendingUpdate = null)
+        }
+    }
+
+    fun onDeleteHandled() {
+        _uiState.update {
+            it.copy(pendingDelete = null)
         }
     }
 }

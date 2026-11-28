@@ -16,6 +16,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -24,6 +25,7 @@ import coil.compose.AsyncImage
 import my.edu.tarc.tarumtfoodorderingsystem.ui.components.AppActionButton
 import my.edu.tarc.tarumtfoodorderingsystem.ui.components.AppFieldLabel
 import my.edu.tarc.tarumtfoodorderingsystem.ui.components.AppTopBar
+import my.edu.tarc.tarumtfoodorderingsystem.R
 
 @Composable
 fun AdminEditStoreScreen(
@@ -35,7 +37,8 @@ fun AdminEditStoreScreen(
     val focusManager = LocalFocusManager.current
 
     val enabled = uiState.storeId != null &&
-            uiState.pendingUpdate == null
+            uiState.pendingUpdate == null &&
+            uiState.pendingDelete == null
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -87,12 +90,36 @@ fun AdminEditStoreScreen(
                         Spacer(Modifier.height(20.dp))
                     }
 
-                    AppFieldLabel(
-                        title = "Edit Store Name",
-                        required = true
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            AppFieldLabel(
+                                title = "Edit Store Name",
+                                required = true
+                            )
+                        }
 
-                    Spacer(Modifier.height(8.dp))
+                        IconButton(
+                            enabled = enabled && !uiState.isReadingImage,
+                            onClick = {
+                                focusManager.clearFocus()
+                                onAction(AdminEditStoreAction.DeleteClicked)
+                            }
+                        ) {
+                            Icon(
+                                painter = painterResource(
+                                    R.drawable.delete_40px
+                                ),
+                                contentDescription = "Delete store",
+                                tint = colors.error,
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.height(4.dp))
 
                     TextField(
                         value = uiState.name,
@@ -265,6 +292,44 @@ fun AdminEditStoreScreen(
                 )
             }
         }
+    }
+
+    if (uiState.showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                onAction(AdminEditStoreAction.DismissDeleteClicked)
+            },
+            title = {
+                Text("Delete store?")
+            },
+            text = {
+                Text(
+                    text = "\"${uiState.originalName}\" will be " +
+                            "permanently deleted. This cannot be undone."
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onAction(AdminEditStoreAction.ConfirmDeleteClicked)
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = colors.error
+                    )
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        onAction(AdminEditStoreAction.DismissDeleteClicked)
+                    }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 
